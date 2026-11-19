@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Hotel, Lock, Mail, ArrowRight, Loader2, Sparkles, ShieldCheck } from 'lucide-react';
+import { Hotel, Lock, Mail, ArrowRight, Loader2, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, getAuthToken, setAuthToken } from '@/lib/api';
 
 export default function RootLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@hotel.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
@@ -58,14 +58,6 @@ export default function RootLoginPage() {
     }
   };
 
-  const handleDemoLogin = () => {
-    setEmail('admin@hotel.com');
-    setPassword('admin123');
-    setTimeout(() => {
-      handleSubmit();
-    }, 50);
-  };
-
   if (checkingAuth) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100">
@@ -103,7 +95,7 @@ export default function RootLoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@hotel.com"
+                  placeholder="Enter staff email address"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
                 />
               </div>
@@ -142,21 +134,6 @@ export default function RootLoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Login Option */}
-          <div className="pt-4 border-t border-slate-800 text-center">
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              className="w-full py-2.5 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 font-semibold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>1-Click Demo Sign In (General Manager)</span>
-            </button>
-            <p className="text-[11px] text-slate-500 mt-2">
-              Default access: <code>admin@hotel.com</code> / <code>admin123</code>
-            </p>
-          </div>
         </div>
 
         <p className="text-center text-[11px] text-slate-600 mt-6">
