@@ -13,24 +13,47 @@ import {
   BookOpen,
   LogOut,
   Radio,
-  QrCode,
+  Loader2,
+  ShieldCheck,
 } from 'lucide-react';
-import { clearAuthToken, getAuthToken, setAuthToken } from '@/lib/api';
+import { clearAuthToken, getAuthToken, api } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    // If no token exists, set demo token automatically so previewing admin is frictionless
-    let token = getAuthToken();
-    if (!token) {
-      setAuthToken('demo-admin-token');
+    const token = getAuthToken();
+
+    // If no token exists, immediately redirect to login page
+    if (!token || token === 'demo-admin-token') {
+      clearAuthToken();
+      router.replace('/login');
+      return;
     }
 
-    // Join admin socket channel
+    // Verify token validity with backend API
+    api.auth
+      .getMe()
+      .then((res) => {
+        if (res.success && res.user) {
+          setIsAuthenticated(true);
+          setCurrentUser(res.user);
+        } else {
+          clearAuthToken();
+          router.replace('/login');
+        }
+      })
+      .catch(() => {
+        clearAuthToken();
+        router.replace('/login');
+      });
+
+    // Join admin realtime channel
     const socket = getSocket();
     socket.emit('join:admin');
 
@@ -46,12 +69,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
     };
-  }, []);
+  }, [router]);
 
   const handleLogout = () => {
     clearAuthToken();
-    router.push('/login');
+    router.replace('/login');
   };
+
+  // If verifying authentication, show secure loading barrier
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100">
+        <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl mb-4">
+          <ShieldCheck className="w-8 h-8 mx-auto" />
+        </div>
+        <Loader2 className="w-6 h-6 text-amber-400 animate-spin mb-3" />
+        <h2 className="text-sm font-bold text-white">Verifying Staff Authorization</h2>
+        <p className="text-xs text-slate-500 mt-1">Direct access requires authenticated staff credentials.</p>
+      </div>
+    );
+  }
 
   const navLinks = [
     { href: '/admin', label: 'Overview', icon: LayoutDashboard },
@@ -94,6 +131,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="flex items-center space-x-3">
+            {currentUser && (
+              <span className="text-xs text-slate-400 hidden sm:inline">
+                Signed in as <strong className="text-amber-300">{currentUser.name}</strong>
+              </span>
+            )}
             <Link
               href="/"
               className="text-xs text-slate-400 hover:text-white px-2 py-1 transition-colors"
@@ -102,10 +144,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition-all cursor-pointer"
+              className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition-all cursor-pointer flex items-center space-x-1 text-xs"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </div>

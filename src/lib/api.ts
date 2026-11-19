@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://hotel-shoreline-qr-backend.onrender.com/api/v1';
 
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -33,6 +33,17 @@ async function request<T = any>(endpoint: string, options: RequestInit = {}): Pr
     ...options,
     headers,
   });
+
+  if (response.status === 401) {
+    clearAuthToken();
+    if (
+      typeof window !== 'undefined' &&
+      !window.location.pathname.startsWith('/login') &&
+      !window.location.pathname.startsWith('/room/')
+    ) {
+      window.location.href = '/login';
+    }
+  }
 
   const data = await response.json().catch(() => ({}));
 

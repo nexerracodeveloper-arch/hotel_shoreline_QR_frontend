@@ -50,11 +50,11 @@ export default function HomePage() {
 
           <div className="flex items-center space-x-3">
             <Link
-              href="/admin"
+              href="/login"
               className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-lg shadow-amber-500/20"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>Admin Operations</span>
+              <span>Staff & Admin Login</span>
             </Link>
           </div>
         </div>
