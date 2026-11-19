@@ -281,7 +281,7 @@ export default function AdminOrdersPage() {
                     {order.status === 'PENDING' && (
                       <button
                         onClick={() => handleUpdateStatus(order.id, 'ACCEPTED')}
-                        className="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all cursor-pointer shadow-md shadow-amber-500/20"
+                        className="flex-1 py-2.5 px-3 min-h-[40px] rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all cursor-pointer shadow-md shadow-amber-500/20 flex items-center justify-center"
                       >
                         Accept Order
                       </button>
@@ -290,7 +290,7 @@ export default function AdminOrdersPage() {
                     {order.status === 'ACCEPTED' && (
                       <button
                         onClick={() => handleUpdateStatus(order.id, 'PREPARING')}
-                        className="flex-1 py-2 px-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-indigo-500/20"
+                        className="flex-1 py-2.5 px-3 min-h-[40px] rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-indigo-500/20 flex items-center justify-center"
                       >
                         Start Cooking (Kitchen)
                       </button>
@@ -299,7 +299,7 @@ export default function AdminOrdersPage() {
                     {order.status === 'PREPARING' && (
                       <button
                         onClick={() => handleUpdateStatus(order.id, 'OUT_FOR_DELIVERY')}
-                        className="flex-1 py-2 px-3 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-purple-500/20 flex items-center justify-center space-x-1.5"
+                        className="flex-1 py-2.5 px-3 min-h-[40px] rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-purple-500/20 flex items-center justify-center space-x-1.5"
                       >
                         <Truck className="w-3.5 h-3.5" />
                         <span>Send for Delivery</span>
@@ -309,7 +309,7 @@ export default function AdminOrdersPage() {
                     {order.status === 'OUT_FOR_DELIVERY' && (
                       <button
                         onClick={() => handleUpdateStatus(order.id, 'DELIVERED')}
-                        className="flex-1 py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all cursor-pointer shadow-md shadow-emerald-500/20 flex items-center justify-center space-x-1.5"
+                        className="flex-1 py-2.5 px-3 min-h-[40px] rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all cursor-pointer shadow-md shadow-emerald-500/20 flex items-center justify-center space-x-1.5"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Mark Delivered to Room</span>
@@ -319,7 +319,7 @@ export default function AdminOrdersPage() {
                     {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
                       <button
                         onClick={() => handleUpdateStatus(order.id, 'CANCELLED')}
-                        className="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 text-xs transition-all cursor-pointer"
+                        className="py-2.5 px-3 min-h-[40px] rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 text-xs transition-all cursor-pointer flex items-center justify-center"
                         title="Cancel Order"
                       >
                         <X className="w-4 h-4" />

@@ -330,11 +330,11 @@ export default function AdminMenuPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           {items.length > 0 && (
             <button
               onClick={() => setIsClearModalOpen(true)}
-              className="px-3.5 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer"
+              className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
               <span>Clear All Menu</span>
@@ -343,7 +343,7 @@ export default function AdminMenuPage() {
 
           <button
             onClick={() => setIsCatModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center space-x-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10"
+            className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10"
           >
             <FolderPlus className="w-4 h-4 text-amber-400" />
             <span>+ Create Category</span>
@@ -358,7 +358,7 @@ export default function AdminMenuPage() {
               }
               setIsModalOpen(true);
             }}
-            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center space-x-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer shrink-0"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>+ Add Menu Dish</span>
@@ -787,8 +787,8 @@ export default function AdminMenuPage() {
 
       {/* Modal: Create Category */}
       {isCatModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setIsCatModalOpen(false)}
               className="absolute top-5 right-5 text-slate-400 hover:text-white"

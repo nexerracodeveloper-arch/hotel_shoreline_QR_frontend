@@ -276,7 +276,7 @@ export default function AdminRoomsPage() {
           <select
             value={floorFilter}
             onChange={(e) => setFloorFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500"
+            className="flex-1 sm:flex-none bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500"
           >
             <option value="all">All Floors</option>
             <option value="1">Floor 1</option>
@@ -287,7 +287,7 @@ export default function AdminRoomsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500"
+            className="flex-1 sm:flex-none bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500"
           >
             <option value="all">All Statuses</option>
             <option value="VACANT">Vacant</option>
@@ -397,11 +397,11 @@ export default function AdminRoomsPage() {
       {/* MODAL 1: QR CODE STUDIO & DOWNLOAD CARD                    */}
       {/* ========================================================== */}
       {isQrModalOpen && selectedRoom && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto space-y-6 shadow-2xl relative">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-4 sm:p-8 max-h-[90vh] overflow-y-auto space-y-5 sm:space-y-6 shadow-2xl relative">
             <button
               onClick={() => setIsQrModalOpen(false)}
-              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800"
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800"
             >
               <X className="w-5 h-5" />
             </button>
@@ -411,7 +411,7 @@ export default function AdminRoomsPage() {
                 <QrCode className="w-4 h-4" />
                 <span>Printable Room QR Studio</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
+              <h2 className="text-lg sm:text-2xl font-black text-white mt-1">
                 Room {selectedRoom.roomNumber} QR Standee Card
               </h2>
               <p className="text-xs text-slate-400 mt-1">
@@ -422,7 +422,7 @@ export default function AdminRoomsPage() {
             {/* Printable Preview Card */}
             <div
               ref={printRef}
-              className="printable-standee-area bg-white text-slate-900 p-6 rounded-2xl border-2 border-slate-200 text-center shadow-lg mx-auto max-w-sm"
+              className="printable-standee-area bg-white text-slate-900 p-4 sm:p-6 rounded-2xl border-2 border-slate-200 text-center shadow-lg mx-auto w-full max-w-sm"
             >
               <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">
                 GRAND AZURE LUXURY RESORT
@@ -448,10 +448,10 @@ export default function AdminRoomsPage() {
                   <img
                     src={qrDataUrl}
                     alt={`Room ${selectedRoom.roomNumber} QR`}
-                    className="w-48 h-48 mx-auto"
+                    className="w-40 sm:w-48 h-40 sm:h-48 mx-auto"
                   />
                 ) : (
-                  <div className="w-48 h-48 flex items-center justify-center text-xs text-slate-400">
+                  <div className="w-40 sm:w-48 h-40 sm:h-48 flex items-center justify-center text-xs text-slate-400">
                     Generating QR...
                   </div>
                 )}
@@ -501,8 +501,8 @@ export default function AdminRoomsPage() {
       {/* MODAL 2: ADD NEW ROOM MODAL                                */}
       {/* ========================================================== */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl relative">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 sm:p-8 max-h-[90vh] overflow-y-auto space-y-5 shadow-2xl relative">
             <button
               onClick={() => setIsAddModalOpen(false)}
               className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800"
