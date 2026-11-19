@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { formatRupees } from '@/lib/currency';
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -35,7 +36,7 @@ export default function AdminBookingsPage() {
   const [checkOutDate, setCheckOutDate] = useState(
     new Date(Date.now() + 48 * 3600 * 1000).toISOString().split('T')[0]
   );
-  const [totalAmount, setTotalAmount] = useState('240');
+  const [totalAmount, setTotalAmount] = useState('3500');
   const [instantCheckIn, setInstantCheckIn] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -218,7 +219,7 @@ export default function AdminBookingsPage() {
                         Dates: {new Date(b.checkInDate).toLocaleDateString()} &rarr;{' '}
                         {new Date(b.checkOutDate).toLocaleDateString()}
                       </span>
-                      <span>Folio: ${Number(b.totalAmount).toFixed(2)}</span>
+                      <span>Folio: {formatRupees(b.totalAmount)}</span>
                     </div>
                   </div>
                 </div>
@@ -361,14 +362,17 @@ export default function AdminBookingsPage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Total Rate ($)
+                  Total Rate (₹)
                 </label>
-                <input
-                  type="number"
-                  value={totalAmount}
-                  onChange={(e) => setTotalAmount(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-amber-400 font-bold text-xs">₹</span>
+                  <input
+                    type="number"
+                    value={totalAmount}
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-semibold"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center space-x-2 pt-1">

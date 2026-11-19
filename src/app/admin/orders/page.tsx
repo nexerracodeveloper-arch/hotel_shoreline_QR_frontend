@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
+import { formatRupees } from '@/lib/currency';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -253,7 +254,7 @@ export default function AdminOrdersPage() {
                           {it.menuItemName || 'Item'}
                         </span>
                         <span className="font-semibold text-slate-300">
-                          ${Number(it.totalPrice || 0).toFixed(2)}
+                          {formatRupees(it.totalPrice)}
                         </span>
                       </div>
                     ))}
@@ -271,7 +272,7 @@ export default function AdminOrdersPage() {
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400">Total Billed to Room:</span>
                     <span className="text-base font-extrabold text-amber-400">
-                      ${Number(order.totalAmount).toFixed(2)}
+                      {formatRupees(order.totalAmount)}
                     </span>
                   </div>
 

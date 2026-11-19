@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { formatRupees } from '@/lib/currency';
 
 export default function AdminRoomsPage() {
   const [rooms, setRooms] = useState<any[]>([]);
@@ -36,7 +37,7 @@ export default function AdminRoomsPage() {
   const [newRoomNumber, setNewRoomNumber] = useState('');
   const [newFloor, setNewFloor] = useState('1');
   const [newType, setNewType] = useState('STANDARD');
-  const [newPrice, setNewPrice] = useState('120');
+  const [newPrice, setNewPrice] = useState('2500');
   const [newCapacity, setNewCapacity] = useState('2');
   const [newDescription, setNewDescription] = useState('');
   const [addingRoom, setAddingRoom] = useState(false);
@@ -345,8 +346,9 @@ export default function AdminRoomsPage() {
                     </span>
                   </div>
 
-                  <div className="mt-2 text-xs font-semibold text-slate-300">
-                    {room.type.replace(/_/g, ' ')}
+                  <div className="mt-2 text-xs font-semibold text-slate-300 flex items-center justify-between">
+                    <span>{room.type.replace(/_/g, ' ')}</span>
+                    <span className="text-amber-400 font-bold">{formatRupees(room.pricePerNight)}/night</span>
                   </div>
 
                   {room.activeBooking ? (
@@ -564,14 +566,18 @@ export default function AdminRoomsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1">
-                    Price Per Night ($)
+                    Price Per Night (₹)
                   </label>
-                  <input
-                    type="number"
-                    value={newPrice}
-                    onChange={(e) => setNewPrice(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-amber-400 font-bold text-xs">₹</span>
+                    <input
+                      type="number"
+                      placeholder="2500"
+                      value={newPrice}
+                      onChange={(e) => setNewPrice(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-semibold"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1">

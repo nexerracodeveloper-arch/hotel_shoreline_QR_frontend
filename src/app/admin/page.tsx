@@ -6,7 +6,7 @@ import {
   BedDouble,
   UtensilsCrossed,
   BellRing,
-  DollarSign,
+  IndianRupee,
   QrCode,
   ArrowRight,
   TrendingUp,
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
+import { formatRupees } from '@/lib/currency';
 
 export default function AdminOverviewPage() {
   const [stats, setStats] = useState<any>(null);
@@ -163,11 +164,11 @@ export default function AdminOverviewPage() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400">F&B Room Revenue</span>
             <div className="p-2 bg-purple-500/10 text-purple-400 rounded-xl">
-              <DollarSign className="w-4 h-4" />
+              <IndianRupee className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-white">
-            ${Number(stats?.totalRevenue || 0).toFixed(2)}
+            {formatRupees(stats?.totalRevenue)}
           </div>
           <div className="text-xs text-slate-400">Billed to room folios</div>
         </div>
@@ -215,7 +216,7 @@ export default function AdminOverviewPage() {
 
                   <div className="text-right shrink-0">
                     <div className="font-extrabold text-amber-400">
-                      ${Number(order.totalAmount).toFixed(2)}
+                      {formatRupees(order.totalAmount)}
                     </div>
                     <span className="text-[10px] text-slate-400 uppercase font-semibold">
                       {order.status.replace(/_/g, ' ')}
