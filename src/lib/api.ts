@@ -1,4 +1,20 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://hotel-shoreline-qr-backend.onrender.com/api/v1';
+function resolveApiBase(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!envUrl || typeof envUrl !== 'string' || envUrl.trim() === '') {
+    return 'https://hotel-shoreline-qr-backend.onrender.com/api/v1';
+  }
+  let base = envUrl.trim().replace(/\/+$/, '');
+  if (!base.endsWith('/api/v1')) {
+    if (base.endsWith('/api')) {
+      base = `${base}/v1`;
+    } else {
+      base = `${base}/api/v1`;
+    }
+  }
+  return base;
+}
+
+const API_BASE = resolveApiBase();
 
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -28,11 +44,19 @@ async function request<T = any>(endpoint: string, options: RequestInit = {}): Pr
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const url = `${API_BASE}${endpoint}`;
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${API_BASE}${cleanEndpoint}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (netErr: any) {
+    console.error('Network request failed for:', url, netErr);
+    throw new Error(`Failed to connect to backend at ${url}. Check server status.`);
+  }
 
   if (response.status === 401) {
     clearAuthToken();
@@ -48,7 +72,7 @@ async function request<T = any>(endpoint: string, options: RequestInit = {}): Pr
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || `HTTP ${response.status}: Request failed`);
+    throw new Error(data.error || `HTTP ${response.status}: Request to ${cleanEndpoint} failed`);
   }
 
   return data as T;
