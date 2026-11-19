@@ -32,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     // If no token exists, immediately redirect to login page
     if (!token || token === 'demo-admin-token') {
       clearAuthToken();
-      router.replace('/login');
+      router.replace('/');
       return;
     }
 
@@ -45,12 +45,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           setCurrentUser(res.user);
         } else {
           clearAuthToken();
-          router.replace('/login');
+          router.replace('/');
         }
       })
       .catch(() => {
         clearAuthToken();
-        router.replace('/login');
+        router.replace('/');
       });
 
     // Join admin realtime channel
@@ -73,7 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = () => {
     clearAuthToken();
-    router.replace('/login');
+    router.replace('/');
   };
 
   // If verifying authentication, show secure loading barrier
@@ -136,19 +136,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 Signed in as <strong className="text-amber-300">{currentUser.name}</strong>
               </span>
             )}
-            <Link
-              href="/"
-              className="text-xs text-slate-400 hover:text-white px-2 py-1 transition-colors"
-            >
-              Public Home
-            </Link>
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition-all cursor-pointer flex items-center space-x-1 text-xs"
+              className="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-300 hover:text-red-400 border border-slate-700/70 transition-all cursor-pointer flex items-center space-x-1.5 text-xs font-semibold"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign Out</span>
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
