@@ -1,19 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  --primary: #0f172a;
-  --primary-gold: #d97706;
+  --primary: #0c0a08;
+  --primary-gold: #d4af37;
   --primary-gold-light: #fef3c7;
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #0c0a08;
+  --foreground: #f8fafc;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.font-serif-luxury {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+/* Luxury Gold Text Gradient */
+.gold-text-gradient {
+  background: linear-gradient(135deg, #fff2cc 0%, #dfba73 35%, #c5a059 70%, #997424 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Warm Sunset Copper Gradient */
+.copper-text-gradient {
+  background: linear-gradient(135deg, #fed7aa 0%, #fb923c 40%, #ea580c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Luxury Gold Border */
+.gold-border {
+  border: 1px solid rgba(212, 175, 55, 0.35);
+}
+
+.gold-border-subtle {
+  border: 1px solid rgba(212, 175, 55, 0.18);
+}
+
+/* Luxury Dark Card with subtle gold rim glow */
+.luxury-card {
+  background: radial-gradient(circle at top left, #1a1410 0%, #120e0b 60%, #0b0907 100%);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+}
+
+/* Subtle luxury wave line art overlay */
+.wave-lines-bg {
+  background-color: #0d0b09;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.08), transparent 45%),
+    radial-gradient(circle at 100% 50%, rgba(230, 104, 60, 0.05), transparent 40%),
+    linear-gradient(180deg, #120e0b 0%, #0b0806 100%);
 }
 
 /* Custom Scrollbar */
@@ -22,14 +68,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #120e0b;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #3e3223;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #c5a059;
 }
 
 /* Printable Standee Styles */

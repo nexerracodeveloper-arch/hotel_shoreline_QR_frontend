@@ -23,6 +23,10 @@ import {
   PhoneCall,
   BedDouble,
   Search,
+  Wine,
+  Info,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -46,10 +50,12 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
   const [roomData, setRoomData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'menu' | 'amenities' | 'orders'>('menu');
 
-  // Menu State
+  // Menu Section Switcher: 'all' | 'food' | 'bar'
+  const [activeSection, setActiveSection] = useState<'all' | 'food' | 'bar'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [filterVegOnly, setFilterVegOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showInfoBanner, setShowInfoBanner] = useState(false);
 
   // Cart State
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -225,17 +231,23 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100">
-        <Loader2 className="w-10 h-10 text-amber-400 animate-spin mb-4" />
-        <h2 className="text-xl font-bold">Connecting to your Room...</h2>
-        <p className="text-xs text-slate-400 mt-1">Verifying room QR signature</p>
+      <div className="min-h-screen bg-[#0c0a08] flex flex-col items-center justify-center p-6 text-slate-100">
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4 shadow-lg shadow-amber-500/10 animate-pulse">
+          <Utensils className="w-7 h-7" />
+        </div>
+        <Loader2 className="w-7 h-7 text-amber-400 animate-spin mb-3" />
+        <h2 className="text-lg font-serif-luxury text-white tracking-wide">Hotel Shoreline Vista</h2>
+        <p className="text-xs text-amber-400/80 mt-1 uppercase tracking-widest font-semibold">
+          Waves Multicuisine & Bar
+        </p>
+        <p className="text-[11px] text-slate-500 mt-2">Connecting to Room In-Room Dining Service...</p>
       </div>
     );
   }
 
   if (error || !roomData) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-slate-100">
+      <div className="min-h-screen bg-[#0c0a08] flex flex-col items-center justify-center p-6 text-center text-slate-100">
         <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl mb-4">
           <AlertCircle className="w-10 h-10 mx-auto" />
         </div>
@@ -245,7 +257,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
         </p>
         <button
           onClick={loadRoomInfo}
-          className="mt-6 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm cursor-pointer"
+          className="mt-6 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm cursor-pointer shadow-lg shadow-amber-500/20 transition-all"
         >
           Retry Scan
         </button>
@@ -255,12 +267,27 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
 
   const { room, hotel, activeGuest, catalog } = roomData;
 
+  const isBarCategory = (name: string) => name.toLowerCase().startsWith('waves bar');
+
+  // Filter categories by section
+  const visibleCategories = (catalog || []).filter((cat: any) => {
+    if (activeSection === 'food') return !isBarCategory(cat.name);
+    if (activeSection === 'bar') return isBarCategory(cat.name);
+    return true;
+  });
+
   // Flattened items for filtering
   const allCatalogItems = (catalog || []).flatMap((cat: any) =>
-    (cat.items || []).map((item: any) => ({ ...item, categoryName: cat.name }))
+    (cat.items || []).map((item: any) => ({
+      ...item,
+      categoryName: cat.name,
+      isBar: isBarCategory(cat.name),
+    }))
   );
 
   const filteredItems = allCatalogItems.filter((item: any) => {
+    if (activeSection === 'food' && item.isBar) return false;
+    if (activeSection === 'bar' && !item.isBar) return false;
     if (selectedCategory !== 'all' && item.categoryId !== selectedCategory) return false;
     if (filterVegOnly && !item.isVeg) return false;
     if (searchQuery) {
@@ -272,47 +299,108 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
     return true;
   });
 
+  const foodCount = allCatalogItems.filter((i: any) => !i.isBar).length;
+  const barCount = allCatalogItems.filter((i: any) => i.isBar).length;
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-28 selection:bg-amber-500/30">
+    <div className="min-h-screen bg-[#0c0a08] text-slate-100 pb-28 selection:bg-amber-500/30 wave-lines-bg">
       {/* ================================================================ */}
-      {/* HOTEL IN-ROOM RESPONSIVE HEADER                                  */}
+      {/* LUXURY HOTEL IN-ROOM RESPONSIVE HEADER                           */}
       {/* ================================================================ */}
-      <header className="relative bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/80 px-3 sm:px-6 pt-5 pb-5">
+      <header className="relative bg-gradient-to-b from-[#140f0c] via-[#100d0a] to-[#0c0a08] border-b border-[#d4af37]/25 px-3 sm:px-6 pt-5 pb-5 shadow-2xl">
         <div className="max-w-6xl mx-auto">
-          {/* Top Brand & Wifi Bar */}
+          {/* Top Brand & Location */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2.5">
-              <div className="p-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl">
-                <Hotel className="w-5 h-5" />
+            <div className="flex items-center space-x-3">
+              {/* Official Gold SV Monogram & Waves Badge */}
+              <div className="w-11 h-11 bg-gradient-to-br from-[#2a1f14] to-[#16100b] border-2 border-[#d4af37]/60 text-amber-300 rounded-2xl flex flex-col items-center justify-center font-cinzel font-black text-sm shadow-md shadow-amber-500/10 shrink-0">
+                <span className="leading-none text-[#dfba73]">SV</span>
+                <span className="w-4 h-0.5 bg-[#d4af37] mt-0.5 rounded-full" />
               </div>
               <div>
-                <h1 className="font-extrabold text-sm sm:text-base tracking-tight text-white">
-                  {hotel.name}
+                <h1 className="font-cinzel font-bold text-sm sm:text-lg tracking-wide text-white uppercase flex items-center gap-1.5">
+                  <span>Hotel Shoreline Vista</span>
                 </h1>
-                <p className="text-[10px] sm:text-[11px] text-amber-400/90 font-semibold tracking-wider uppercase">
-                  In-Room Concierge & Dining
-                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="font-serif-luxury italic text-xs sm:text-sm font-semibold text-[#fef3c7]">
+                    waves
+                  </span>
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-orange-400 bg-orange-500/10 px-1.5 py-0.2 rounded border border-orange-500/20">
+                    Multicuisine & Bar
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-xs text-slate-300">
-              <Wifi className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-[11px] font-mono hidden sm:inline">Guest Wi-Fi Connected</span>
-              <span className="text-[11px] font-mono sm:hidden">Wi-Fi</span>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowInfoBanner(!showInfoBanner)}
+                className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#1e1711] border border-[#d4af37]/30 text-xs text-amber-300 hover:text-white transition-all cursor-pointer"
+                title="View Dining Hours & Guest Guidelines"
+              >
+                <Info className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-[11px] font-medium hidden sm:inline">Dining Info</span>
+                {showInfoBanner ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+
+              <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#1e1711] border border-[#d4af37]/20 text-xs text-slate-300">
+                <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-[11px] font-mono hidden sm:inline">Wi-Fi Connected</span>
+                <span className="text-[11px] font-mono sm:hidden">Online</span>
+              </div>
             </div>
           </div>
 
-          {/* Room Badge Banner (Responsive) */}
-          <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-600/10 to-transparent border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div className="text-[10px] uppercase font-bold tracking-widest text-amber-400">
-                Verified Location
+          {/* Dining Hours & Notices Accordion (From Shoreline PDF Page 3) */}
+          {showInfoBanner && (
+            <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-[#1c1510] to-[#120e0b] border border-[#d4af37]/35 text-xs text-slate-300 space-y-3 transition-all animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-[#d4af37]/20 pb-2">
+                <span className="font-cinzel font-bold text-amber-300 text-xs tracking-wider uppercase flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Official Dining Hours & Guidelines</span>
+                </span>
+                <span className="text-[10px] text-orange-400 bg-orange-500/15 px-2 py-0.5 rounded-full border border-orange-500/30 font-semibold">
+                  5% GST Applicable
+                </span>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                ROOM {room.roomNumber}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                <div className="p-2 rounded-xl bg-[#0c0a08]/80 border border-[#d4af37]/15">
+                  <div className="text-amber-400 font-bold uppercase text-[10px]">Breakfast</div>
+                  <div className="text-slate-200 mt-0.5">08:00 – 10:00 hrs</div>
+                </div>
+                <div className="p-2 rounded-xl bg-[#0c0a08]/80 border border-[#d4af37]/15">
+                  <div className="text-amber-400 font-bold uppercase text-[10px]">Lunch</div>
+                  <div className="text-slate-200 mt-0.5">12:30 – 15:30 hrs</div>
+                </div>
+                <div className="p-2 rounded-xl bg-[#0c0a08]/80 border border-[#d4af37]/15">
+                  <div className="text-amber-400 font-bold uppercase text-[10px]">Dinner</div>
+                  <div className="text-slate-200 mt-0.5">19:30 – 22:45 hrs</div>
+                </div>
+                <div className="p-2 rounded-xl bg-[#0c0a08]/80 border border-[#d4af37]/15">
+                  <div className="text-amber-400 font-bold uppercase text-[10px]">All Day Dining</div>
+                  <div className="text-slate-200 mt-0.5">11:00 – 22:45 hrs</div>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-400 leading-relaxed border-t border-slate-800/80 pt-2">
+                <strong className="text-amber-300/90 font-semibold">Allergens Advisory:</strong> Please inform our service associate if allergic to milk, wheat, peanuts, soya, tree nuts, or mushrooms. Waves Bar strictly complies with international responsible service guidelines.
+              </p>
+            </div>
+          )}
+
+          {/* Room Location Banner */}
+          <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#221811] via-[#1a130e] to-transparent border border-[#d4af37]/35 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+            <div>
+              <div className="text-[10px] uppercase font-bold tracking-widest text-[#dfba73]">
+                Verified In-Room Dining Location
+              </div>
+              <div className="text-2xl sm:text-3xl font-cinzel font-black text-white tracking-tight flex items-baseline gap-2">
+                <span>ROOM {room.roomNumber}</span>
+                <span className="text-xs font-sans text-amber-400/90 font-semibold tracking-normal">
+                  (Floor {room.floor})
+                </span>
               </div>
               <div className="text-xs text-slate-300 mt-0.5">
-                Floor {room.floor} • {room.type.replace(/_/g, ' ')}
+                {room.type.replace(/_/g, ' ')} Suite • In-Room QR Service Active
               </div>
             </div>
 
@@ -325,19 +413,19 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
               ) : (
                 <div className="text-xs text-emerald-400 font-semibold flex items-center sm:justify-end space-x-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Room Service Active</span>
+                  <span>Direct Room Billing Active</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Navigation Tabs (Dining / Amenities / Track) */}
-          <div className="grid grid-cols-3 gap-1.5 mt-4 sm:mt-5 p-1 bg-slate-900 border border-slate-800 rounded-xl sm:max-w-md sm:mx-auto">
+          <div className="grid grid-cols-3 gap-1.5 mt-4 sm:mt-5 p-1 bg-[#140f0c] border border-[#d4af37]/20 rounded-xl sm:max-w-md sm:mx-auto">
             <button
               onClick={() => setActiveTab('menu')}
               className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'menu'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-md shadow-amber-500/20'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -349,7 +437,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
               onClick={() => setActiveTab('amenities')}
               className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'amenities'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-md shadow-amber-500/20'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -361,7 +449,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
               onClick={() => setActiveTab('orders')}
               className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center space-x-1.5 relative cursor-pointer ${
                 activeTab === 'orders'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-md shadow-amber-500/20'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -382,16 +470,71 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
         {activeTab === 'menu' && (
           <div className="space-y-4">
             {/* Sticky Search & Filter Bar */}
-            <div className="sticky top-15 sm:top-16 z-30 bg-slate-950/95 backdrop-blur-md pt-1 pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 border-b border-slate-900 space-y-2.5">
+            <div className="sticky top-0 z-30 bg-[#0c0a08]/95 backdrop-blur-md pt-2 pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 border-b border-[#d4af37]/20 space-y-2.5">
+              {/* Menu Section Switcher: All | Multicuisine Restaurant | Waves Bar */}
+              <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#150f0b] border border-[#d4af37]/25 rounded-2xl">
+                <button
+                  onClick={() => {
+                    setActiveSection('all');
+                    setSelectedCategory('all');
+                  }}
+                  className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+                    activeSection === 'all'
+                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>All Items</span>
+                  <span className="text-[10px] opacity-80">({allCatalogItems.length})</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveSection('food');
+                    setSelectedCategory('all');
+                  }}
+                  className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+                    activeSection === 'food'
+                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Utensils className="w-3.5 h-3.5" />
+                  <span className="truncate">🍽️ Multicuisine</span>
+                  <span className="text-[10px] opacity-80 hidden sm:inline">({foodCount})</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveSection('bar');
+                    setSelectedCategory('all');
+                  }}
+                  className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+                    activeSection === 'bar'
+                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Wine className="w-3.5 h-3.5" />
+                  <span className="truncate">🍸 Waves Bar</span>
+                  <span className="text-[10px] opacity-80 hidden sm:inline">({barCount})</span>
+                </button>
+              </div>
+
+              {/* Search Bar & Veg Toggle */}
               <div className="flex items-center space-x-2">
                 <div className="relative flex-1">
                   <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                   <input
                     type="text"
-                    placeholder="Search dishes, drinks, desserts..."
+                    placeholder={
+                      activeSection === 'bar'
+                        ? 'Search cocktails, beers, whiskeys, wines...'
+                        : 'Search soups, starters, biryanis, desserts...'
+                    }
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#16100c] border border-[#d4af37]/25 rounded-xl pl-10 pr-4 py-2.5 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
                   />
                   {searchQuery && (
                     <button
@@ -409,7 +552,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                   className={`px-3 py-2.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer border shrink-0 ${
                     filterVegOnly
                       ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                      : 'bg-[#16100c] border-[#d4af37]/25 text-slate-400 hover:text-white'
                   }`}
                 >
                   <span className="w-3.5 h-3.5 rounded border border-emerald-500 flex items-center justify-center p-0.5">
@@ -423,44 +566,66 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 </button>
               </div>
 
-              {/* Category Pills (Horizontal Scroll) */}
+              {/* Category Pills (Filtered by selected section) */}
               <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
                 <button
                   onClick={() => setSelectedCategory('all')}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all cursor-pointer ${
                     selectedCategory === 'all'
-                      ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
-                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                      ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                      : 'bg-[#16100c] border border-[#d4af37]/20 text-slate-300 hover:text-white'
                   }`}
                 >
-                  All Dishes ({allCatalogItems.length})
+                  All ({filteredItems.length})
                 </button>
-                {(catalog || []).map((cat: any) => {
+                {visibleCategories.map((cat: any) => {
                   const isSelected = selectedCategory === cat.id;
                   const count = (cat.items || []).length;
+                  const displayLabel = cat.name.replace(/^Waves Bar - /, '');
                   return (
                     <button
                       key={cat.id}
                       onClick={() => setSelectedCategory(cat.id)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all cursor-pointer ${
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all cursor-pointer flex items-center space-x-1 ${
                         isSelected
-                          ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
-                          : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                          ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                          : 'bg-[#16100c] border border-[#d4af37]/20 text-slate-300 hover:text-white'
                       }`}
                     >
-                      {cat.name} ({count})
+                      <span>{displayLabel}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                          isSelected ? 'bg-slate-950 text-amber-400' : 'bg-slate-800 text-slate-400'
+                        }`}
+                      >
+                        {count}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Dishes Feed: Responsive Grid (Single column on mobile, 2 cols on tablet, 3 on desktop) */}
+            {/* Dishes Feed: Responsive Grid */}
             <div>
               {filteredItems.length === 0 ? (
-                <div className="text-center py-16 text-slate-400 text-xs bg-slate-900/40 rounded-3xl border border-slate-800/80 p-8">
-                  <Utensils className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                  <p>No menu dishes found matching your search or filters.</p>
+                <div className="text-center py-16 text-slate-400 text-xs bg-[#140f0b]/80 rounded-3xl border border-[#d4af37]/20 p-8 space-y-2">
+                  <Utensils className="w-8 h-8 text-amber-500/40 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-white">No items found</p>
+                  <p className="text-xs text-slate-400">
+                    Try clearing your search query or selecting a different category.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory('all');
+                      setActiveSection('all');
+                      setFilterVegOnly(false);
+                    }}
+                    className="mt-2 px-4 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-semibold cursor-pointer"
+                  >
+                    Reset Filters
+                  </button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
@@ -469,7 +634,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                     return (
                       <div
                         key={item.id}
-                        className="p-3.5 sm:p-4 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 flex flex-col justify-between transition-all hover:shadow-lg hover:shadow-black/40 group"
+                        className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-[#1a140f] to-[#110d0a] border border-[#d4af37]/25 hover:border-[#d4af37]/60 flex flex-col justify-between transition-all hover:shadow-xl hover:shadow-black/50 group"
                       >
                         {/* Upper Row: Left Info & Right Image */}
                         <div className="flex gap-3.5">
@@ -490,8 +655,8 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                                     }`}
                                   />
                                 </span>
-                                <span className="text-[10px] text-amber-400/80 font-bold uppercase tracking-wider truncate">
-                                  {item.categoryName}
+                                <span className="text-[10px] text-[#dfba73] font-bold uppercase tracking-wider truncate">
+                                  {item.categoryName.replace(/^Waves Bar - /, '')}
                                 </span>
                               </div>
 
@@ -500,7 +665,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                               </h3>
 
                               <p className="text-[11px] sm:text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed">
-                                {item.description || 'Freshly prepared by Grand Azure culinary chefs.'}
+                                {item.description || 'Speciality crafted by Shoreline Vista culinary & bar team.'}
                               </p>
                             </div>
 
@@ -510,8 +675,8 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                                 {formatRupees(item.price)}
                               </span>
                               {item.prepTimeMin && (
-                                <span className="text-[10px] text-slate-400 flex items-center space-x-1 bg-slate-800/80 px-2 py-0.5 rounded-full">
-                                  <Clock className="w-3 h-3 text-slate-400" />
+                                <span className="text-[10px] text-slate-400 flex items-center space-x-1 bg-[#241b14] px-2 py-0.5 rounded-full border border-[#d4af37]/15">
+                                  <Clock className="w-3 h-3 text-amber-400/80" />
                                   <span>{item.prepTimeMin}m</span>
                                 </span>
                               )}
@@ -519,23 +684,25 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                           </div>
 
                           {/* Right Image Thumbnail (Responsive) */}
-                          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden shrink-0 bg-slate-800 relative flex items-center justify-center border border-slate-800">
+                          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden shrink-0 bg-[#241b14] relative flex items-center justify-center border border-[#d4af37]/20 shadow-inner">
                             {item.imageUrl ? (
                               <img
                                 src={item.imageUrl}
                                 alt={item.name}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
+                            ) : item.isBar ? (
+                              <Wine className="w-8 h-8 text-amber-500/40" />
                             ) : (
-                              <Utensils className="w-8 h-8 text-slate-600" />
+                              <Utensils className="w-8 h-8 text-amber-500/40" />
                             )}
                           </div>
                         </div>
 
-                        {/* Bottom Row Action Button / Stepper (Large Touch Target) */}
-                        <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                        {/* Bottom Row Action Button / Stepper */}
+                        <div className="mt-3 pt-3 border-t border-[#d4af37]/15 flex items-center justify-between">
                           <span className="text-[11px] text-slate-400">
-                            {item.isAvailable ? 'Available for In-Room Dining' : 'Sold Out'}
+                            {item.isAvailable ? 'In-Room Dining' : 'Sold Out'}
                           </span>
 
                           {inCart ? (
@@ -562,7 +729,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                             <button
                               onClick={() => addToCart(item)}
                               disabled={!item.isAvailable}
-                              className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 text-xs font-extrabold transition-all shadow-md shadow-amber-500/20 cursor-pointer flex items-center space-x-1"
+                              className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 text-xs font-black transition-all shadow-md shadow-amber-500/20 cursor-pointer flex items-center space-x-1"
                             >
                               <Plus className="w-3.5 h-3.5" />
                               <span>ADD</span>
@@ -583,7 +750,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
         {/* ============================================================== */}
         {activeTab === 'amenities' && (
           <div className="space-y-5">
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#140f0c] border border-[#d4af37]/25 shadow-lg">
               <h2 className="font-bold text-sm sm:text-base text-white flex items-center space-x-2">
                 <BellRing className="w-4 h-4 text-amber-400" />
                 <span>Instant In-Room Service Desk</span>
@@ -593,11 +760,11 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
               </p>
             </div>
 
-            {/* Quick Amenity Tiles: Responsive Grid (2 cols mobile, 3 tablet, 4 desktop) */}
+            {/* Quick Amenity Tiles */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {[
                 { type: 'EXTRA_TOWELS', label: 'Extra Towels', icon: Sparkles, desc: 'Fresh bath sheets' },
-                { type: 'BOTTLED_WATER', label: 'Bottled Water', icon: Droplets, desc: 'Complimentary water' },
+                { type: 'BOTTLED_WATER', label: 'Bottled Water', icon: Droplets, desc: 'Packaged mineral water' },
                 { type: 'HOUSEKEEPING', label: 'Room Cleaning', icon: BedDouble, desc: 'Turndown & linens' },
                 { type: 'TOILETRIES', label: 'Toiletries Kit', icon: Sparkles, desc: 'Dental & shaving sets' },
                 { type: 'LAUNDRY', label: 'Laundry Pickup', icon: Shirt, desc: 'Dry clean & pressing' },
@@ -614,7 +781,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                     className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-amber-500/15 border-amber-500 text-white ring-2 ring-amber-500/40 shadow-lg shadow-amber-500/10'
-                        : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:border-slate-700'
+                        : 'bg-[#140f0c] border-[#d4af37]/20 text-slate-300 hover:bg-[#1e1711] hover:border-[#d4af37]/40'
                     }`}
                   >
                     <Icon className={`w-6 h-6 mb-2.5 ${isSelected ? 'text-amber-400' : 'text-slate-400'}`} />
@@ -626,7 +793,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
             </div>
 
             {/* Details Box */}
-            <div className="p-4 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+            <div className="p-4 sm:p-6 rounded-2xl bg-[#140f0c] border border-[#d4af37]/25 space-y-4 shadow-lg">
               <label className="text-xs sm:text-sm font-semibold text-slate-300 block">
                 Additional Instructions for Staff (Optional):
               </label>
@@ -635,7 +802,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 placeholder="E.g., Please bring 2 extra bath sheets and deliver after 4 PM..."
                 value={amenityDetails}
                 onChange={(e) => setAmenityDetails(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                className="w-full bg-[#0c0a08] border border-[#d4af37]/25 rounded-xl p-3.5 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
               />
 
               <button
@@ -667,7 +834,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
             </h2>
 
             {liveOrders.length === 0 && liveRequests.length === 0 ? (
-              <div className="p-10 text-center rounded-3xl bg-slate-900 border border-slate-800 text-slate-400 text-xs">
+              <div className="p-10 text-center rounded-3xl bg-[#140f0c] border border-[#d4af37]/20 text-slate-400 text-xs">
                 No active orders or requests placed yet for Room {room.roomNumber}.
               </div>
             ) : (
@@ -686,7 +853,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                   return (
                     <div
                       key={order.id}
-                      className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3.5 shadow-lg"
+                      className="p-4 sm:p-5 rounded-2xl bg-[#140f0c] border border-[#d4af37]/25 space-y-3.5 shadow-lg"
                     >
                       <div className="flex items-center justify-between">
                         <div>
@@ -711,7 +878,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                       </div>
 
                       {/* Items List */}
-                      <div className="border-t border-slate-800/80 pt-2.5 space-y-2 text-xs text-slate-300">
+                      <div className="border-t border-[#d4af37]/15 pt-2.5 space-y-2 text-xs text-slate-300">
                         {(order.items || []).map((it: any) => (
                           <div key={it.id} className="flex justify-between">
                             <span>
@@ -726,12 +893,12 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                       </div>
 
                       {order.specialNotes && (
-                        <div className="text-[11px] bg-slate-950 p-2.5 rounded-xl text-amber-300/90 italic">
+                        <div className="text-[11px] bg-[#0c0a08] p-2.5 rounded-xl text-amber-300/90 italic border border-[#d4af37]/15">
                           Note: "{order.specialNotes}"
                         </div>
                       )}
 
-                      <div className="border-t border-slate-800 pt-2.5 flex items-center justify-between text-xs">
+                      <div className="border-t border-[#d4af37]/15 pt-2.5 flex items-center justify-between text-xs">
                         <span className="text-slate-400">Total Billed to Room:</span>
                         <span className="font-black text-amber-400 text-base">
                           {formatRupees(order.totalAmount)}
@@ -745,7 +912,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 {liveRequests.map((req: any) => (
                   <div
                     key={req.id}
-                    className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between shadow-lg"
+                    className="p-4 sm:p-5 rounded-2xl bg-[#140f0c] border border-[#d4af37]/25 flex items-center justify-between shadow-lg"
                   >
                     <div>
                       <div className="font-bold text-xs sm:text-sm text-white">
@@ -781,7 +948,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
         <div className="fixed bottom-3 sm:bottom-4 left-0 right-0 max-w-xl mx-auto px-3 sm:px-6 z-40 pb-[env(safe-area-inset-bottom,0px)]">
           <button
             onClick={() => setIsCartOpen(true)}
-            className="w-full p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold shadow-2xl shadow-amber-500/40 flex items-center justify-between cursor-pointer transition-all transform active:scale-[0.99]"
+            className="w-full p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold shadow-2xl shadow-amber-500/40 flex items-center justify-between cursor-pointer transition-all transform active:scale-[0.99] border border-amber-300/40"
           >
             <div className="flex items-center space-x-2.5">
               <div className="w-7 h-7 rounded-full bg-slate-950 text-amber-400 flex items-center justify-center text-xs font-black">
@@ -790,7 +957,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
               <span className="text-xs sm:text-sm font-black">View Room Service Order</span>
             </div>
             <div className="flex items-center space-x-1.5">
-              <span className="text-sm sm:text-base font-extrabold">{formatRupees(cartTotal)}</span>
+              <span className="text-sm sm:text-base font-black">{formatRupees(cartTotal)}</span>
               <ChevronRight className="w-5 h-5" />
             </div>
           </button>
@@ -801,15 +968,15 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
       {/* CART DRAWER / BOTTOM SHEET MODAL (Responsive)                     */}
       {/* ================================================================ */}
       {isCartOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-slate-900 border-t sm:border border-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 max-h-[90vh] flex flex-col shadow-2xl pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-[#140f0c] border-t sm:border border-[#d4af37]/35 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 max-h-[90vh] flex flex-col shadow-2xl pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             {/* Mobile Sheet Drag Handle */}
             <div className="sm:hidden w-12 h-1 bg-slate-700 rounded-full mx-auto mb-3" />
 
-            <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3.5 border-b border-[#d4af37]/20">
               <div className="flex items-center space-x-2">
                 <ShoppingBag className="w-5 h-5 text-amber-400" />
-                <h3 className="font-extrabold text-sm sm:text-base text-white">
+                <h3 className="font-cinzel font-bold text-sm sm:text-base text-white">
                   Room {room.roomNumber} Dining Order
                 </h3>
               </div>
@@ -832,10 +999,10 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                     <div className="text-[11px] text-slate-400">{formatRupees(item.price)} each</div>
                   </div>
 
-                  <div className="flex items-center space-x-2 bg-slate-800 border border-slate-700/80 rounded-xl px-2 py-1">
+                  <div className="flex items-center space-x-2 bg-[#1e1711] border border-[#d4af37]/25 rounded-xl px-2 py-1">
                     <button
                       onClick={() => updateCartQuantity(item.id, -1)}
-                      className="w-6 h-6 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 flex items-center justify-center cursor-pointer"
+                      className="w-6 h-6 rounded-md bg-[#2d2218] hover:bg-slate-700 text-slate-200 flex items-center justify-center cursor-pointer"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
@@ -857,7 +1024,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
               ))}
 
               {/* Special Instructions */}
-              <div className="pt-3 border-t border-slate-800 space-y-1.5">
+              <div className="pt-3 border-t border-[#d4af37]/20 space-y-1.5">
                 <label className="text-[11px] font-semibold text-slate-300 block">
                   Kitchen Notes / Special Requests:
                 </label>
@@ -866,7 +1033,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                   placeholder="E.g., No spicy, extra cutlery, warm water..."
                   value={specialNotes}
                   onChange={(e) => setSpecialNotes(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-[#0c0a08] border border-[#d4af37]/25 rounded-xl px-3 py-2 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
                 />
               </div>
 
@@ -881,7 +1048,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                     placeholder="Guest name"
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#0c0a08] border border-[#d4af37]/25 rounded-xl px-3 py-2 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
                   />
                 </div>
                 <div>
@@ -893,14 +1060,14 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                     placeholder="Phone number"
                     value={guestPhone}
                     onChange={(e) => setGuestPhone(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#0c0a08] border border-[#d4af37]/25 rounded-xl px-3 py-2 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
                   />
                 </div>
               </div>
             </div>
 
             {/* Total & Checkout Button */}
-            <div className="pt-3 border-t border-slate-800 space-y-2.5">
+            <div className="pt-3 border-t border-[#d4af37]/20 space-y-2.5">
               <div className="flex items-center justify-between text-xs sm:text-sm">
                 <span className="text-slate-400">Subtotal</span>
                 <span className="font-bold text-white">{formatRupees(cartTotal)}</span>
@@ -909,7 +1076,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 <span>In-Room Delivery</span>
                 <span className="text-emerald-400 font-semibold">Complimentary</span>
               </div>
-              <div className="flex items-center justify-between text-sm sm:text-base font-extrabold text-white pt-2 border-t border-slate-800">
+              <div className="flex items-center justify-between text-sm sm:text-base font-extrabold text-white pt-2 border-t border-[#d4af37]/20">
                 <span>Total to Room Folio:</span>
                 <span className="text-amber-400 text-base sm:text-lg">{formatRupees(cartTotal)}</span>
               </div>
@@ -924,7 +1091,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Confirm & Send to Kitchen</span>
+                    <span>Confirm & Send to Kitchen / Bar</span>
                   </>
                 )}
               </button>

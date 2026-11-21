@@ -130,10 +130,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div>
                 <span className="font-extrabold text-sm sm:text-base text-white tracking-tight block leading-tight">
-                  Grand Azure
+                  Shoreline Vista
                 </span>
                 <span className="text-[9px] sm:text-[10px] text-amber-400 font-semibold tracking-wider uppercase">
-                  Operations Command
+                  Manipal • Operations
                 </span>
               </div>
             </Link>
@@ -287,9 +287,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Hotel className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-sm text-white">Grand Azure</h3>
+                    <h3 className="font-extrabold text-sm text-white">Hotel Shoreline Vista</h3>
                     <p className="text-[10px] text-amber-400 font-semibold uppercase tracking-wider">
-                      Staff Portal
+                      Waves Multicuisine & Bar
                     </p>
                   </div>
                 </div>

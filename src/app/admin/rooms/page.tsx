@@ -425,10 +425,10 @@ export default function AdminRoomsPage() {
               className="printable-standee-area bg-white text-slate-900 p-4 sm:p-6 rounded-2xl border-2 border-slate-200 text-center shadow-lg mx-auto w-full max-w-sm"
             >
               <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">
-                GRAND AZURE LUXURY RESORT
+                HOTEL SHORELINE VISTA
               </div>
               <div className="text-xs font-bold text-amber-600 uppercase tracking-wider mt-0.5">
-                In-Room Dining & 24/7 Concierge
+                Waves Multicuisine & Bar • 24/7 Concierge
               </div>
 
               {/* Room Number Box */}
@@ -459,7 +459,7 @@ export default function AdminRoomsPage() {
 
               {/* Wi-Fi Details */}
               <div className="mt-3 p-2 bg-slate-100 rounded-lg text-[11px] text-slate-600 border border-slate-200">
-                <strong>Wi-Fi:</strong> GrandAzure-Guest • <strong>Password:</strong> Not Required
+                <strong>Wi-Fi:</strong> ShorelineVista-Guest • <strong>Password:</strong> Not Required
               </div>
 
               <div className="mt-2 text-[10px] text-slate-400">

@@ -14,10 +14,11 @@ import {
   Utensils,
   Trash2,
   FolderPlus,
-  AlertTriangle,
   Upload,
   Image as ImageIcon,
   Check,
+  Pencil,
+  Wine,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -73,10 +74,11 @@ export default function AdminMenuPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sectionFilter, setSectionFilter] = useState<'all' | 'food' | 'bar'>('all');
   const [selectedCat, setSelectedCat] = useState('all');
   const [search, setSearch] = useState('');
 
-  // Dish Modal State
+  // Add Dish Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [name, setName] = useState('');
@@ -88,20 +90,43 @@ export default function AdminMenuPage() {
   const [prepTimeMin, setPrepTimeMin] = useState('15');
   const [submitting, setSubmitting] = useState(false);
 
-  // Inline Category Creation inside Dish Modal
+  // Edit Dish Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingDishId, setEditingDishId] = useState('');
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editCategoryId, setEditCategoryId] = useState('');
+  const [editImagePreview, setEditImagePreview] = useState('');
+  const [editUploadingImage, setEditUploadingImage] = useState(false);
+  const [editIsVeg, setEditIsVeg] = useState(true);
+  const [editPrepTimeMin, setEditPrepTimeMin] = useState('15');
+  const [submittingEdit, setSubmittingEdit] = useState(false);
+
+  // Inline Category Creation inside Add Dish Modal
   const [showInlineCatInput, setShowInlineCatInput] = useState(false);
   const [inlineCatName, setInlineCatName] = useState('');
   const [creatingInlineCat, setCreatingInlineCat] = useState(false);
 
-  // Category Modal State
+  // Create Category Modal State
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatDesc, setNewCatDesc] = useState('');
   const [creatingCat, setCreatingCat] = useState(false);
 
+  // Edit Category Modal State
+  const [isEditCatModalOpen, setIsEditCatModalOpen] = useState(false);
+  const [editingCatId, setEditingCatId] = useState('');
+  const [editCatName, setEditCatName] = useState('');
+  const [editCatDesc, setEditCatDesc] = useState('');
+  const [submittingEditCat, setSubmittingEditCat] = useState(false);
+
   // Clear All Modal State
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
+
+  // Shoreline Menu PDF Loader
+  const [loadingShoreline, setLoadingShoreline] = useState(false);
 
   const loadData = async () => {
     try {
@@ -156,7 +181,10 @@ export default function AdminMenuPage() {
     }
   };
 
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    isEditing = false
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -166,19 +194,104 @@ export default function AdminMenuPage() {
     }
 
     try {
-      setUploadingImage(true);
+      if (isEditing) setEditUploadingImage(true);
+      else setUploadingImage(true);
+
       const compressedDataUrl = await compressImage(file, 800, 800, 0.82);
-      setImagePreview(compressedDataUrl);
-      toast.success('Dish photo loaded and optimized!');
+      if (isEditing) {
+        setEditImagePreview(compressedDataUrl);
+      } else {
+        setImagePreview(compressedDataUrl);
+      }
+      toast.success('Dish photograph loaded & optimized!');
     } catch (err: any) {
       toast.error('Failed to process image');
     } finally {
-      setUploadingImage(false);
+      if (isEditing) setEditUploadingImage(false);
+      else setUploadingImage(false);
     }
   };
 
-  const handleRemoveImage = () => {
-    setImagePreview('');
+  // Open Edit Dish Modal
+  const handleOpenEditModal = (item: any) => {
+    setEditingDishId(item.id);
+    setEditName(item.name || '');
+    setEditDescription(item.description || '');
+    setEditPrice(String(item.price || 0));
+    setEditCategoryId(item.categoryId || '');
+    setEditIsVeg(item.isVeg ?? true);
+    setEditPrepTimeMin(String(item.prepTimeMin || 15));
+    setEditImagePreview(item.imageUrl || '');
+    setIsEditModalOpen(true);
+  };
+
+  // Submit Edit Dish
+  const handleUpdateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim() || !editPrice || !editCategoryId) {
+      toast.error('Please enter dish name, category, and price in Rupees');
+      return;
+    }
+
+    try {
+      setSubmittingEdit(true);
+      const res = await api.admin.updateMenuItem(editingDishId, {
+        categoryId: editCategoryId,
+        name: editName.trim(),
+        description: editDescription.trim(),
+        price: parseFloat(editPrice),
+        imageUrl: editImagePreview || null,
+        isVeg: editIsVeg,
+        prepTimeMin: parseInt(editPrepTimeMin, 10) || 15,
+      });
+
+      if (res.success && res.item) {
+        toast.success(`Updated "${res.item.name}" (₹${res.item.price}) successfully!`);
+        setItems((prev) => prev.map((i) => (i.id === editingDishId ? res.item : i)));
+        setIsEditModalOpen(false);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update dish');
+    } finally {
+      setSubmittingEdit(false);
+    }
+  };
+
+  // Open Edit Category Modal
+  const handleOpenEditCatModal = (category: any) => {
+    setEditingCatId(category.id);
+    setEditCatName(category.name || '');
+    setEditCatDesc(category.description || '');
+    setIsEditCatModalOpen(true);
+  };
+
+  // Submit Edit Category
+  const handleUpdateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editCatName.trim()) {
+      toast.error('Please enter category name');
+      return;
+    }
+
+    try {
+      setSubmittingEditCat(true);
+      const res = await api.admin.updateCategory(editingCatId, {
+        name: editCatName.trim(),
+        description: editCatDesc.trim() || undefined,
+      });
+
+      if (res.success && res.category) {
+        toast.success(`Category "${res.category.name}" updated!`);
+        setCategories((prev) =>
+          prev.map((c) => (c.id === editingCatId ? res.category : c))
+        );
+        setIsEditCatModalOpen(false);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update category');
+    } finally {
+      setSubmittingEditCat(false);
+    }
   };
 
   const handleCreateCategory = async (e: React.FormEvent) => {
@@ -265,12 +378,39 @@ export default function AdminMenuPage() {
         setCategories([]);
         setSelectedCat('all');
         setIsClearModalOpen(false);
-        toast.success('All menu items and categories cleared! You can now add dishes manually.');
+        toast.success('All menu items and categories cleared.');
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to clear menu');
     } finally {
       setClearing(false);
+    }
+  };
+
+  // Load Shoreline Vista & Waves Bar Menu from PDF
+  const handleLoadShorelineMenu = async () => {
+    if (
+      items.length > 0 &&
+      !confirm(
+        'This will import the complete official Hotel Shoreline Vista Multicuisine and Waves Bar menu (24 categories and 180+ dishes/drinks). Existing dishes will be updated. Proceed?'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setLoadingShoreline(true);
+      const res = await api.admin.resetShorelineMenu();
+      if (res.success) {
+        toast.success(res.message || 'Loaded Shoreline Vista & Waves Bar Menu!');
+        await loadData();
+      } else {
+        toast.error(res.error || 'Failed to import menu');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to load Shoreline Vista menu');
+    } finally {
+      setLoadingShoreline(false);
     }
   };
 
@@ -310,11 +450,32 @@ export default function AdminMenuPage() {
     }
   };
 
+  const isBarCategory = (cId: string, cName?: string) => {
+    const cat = categories.find((c) => c.id === cId);
+    const name = cName || cat?.name || '';
+    return name.toLowerCase().startsWith('waves bar');
+  };
+
+  const visibleCategories = categories.filter((c) => {
+    if (sectionFilter === 'food') return !isBarCategory(c.id, c.name);
+    if (sectionFilter === 'bar') return isBarCategory(c.id, c.name);
+    return true;
+  });
+
+  const foodItemsCount = items.filter((i) => !isBarCategory(i.categoryId)).length;
+  const barItemsCount = items.filter((i) => isBarCategory(i.categoryId)).length;
+
   const filteredItems = items.filter((item) => {
+    const isBar = isBarCategory(item.categoryId);
+    if (sectionFilter === 'food' && isBar) return false;
+    if (sectionFilter === 'bar' && !isBar) return false;
     if (selectedCat !== 'all' && item.categoryId !== selectedCat) return false;
     if (search) {
       const q = search.toLowerCase();
-      return item.name.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q);
+      return (
+        item.name.toLowerCase().includes(q) ||
+        (item.description || '').toLowerCase().includes(q)
+      );
     }
     return true;
   });
@@ -324,20 +485,43 @@ export default function AdminMenuPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white">Menu Catalog & Price Management</h1>
+          <div className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400">
+              Shoreline Vista • Waves Multicuisine & Bar
+            </span>
+          </div>
+          <h1 className="text-2xl font-extrabold text-white mt-1">
+            Menu Catalog & Price Management
+          </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Organize menu categories and add custom dishes with photo uploads. Rates in Indian Rupees (₹).
+            Full database catalog with edit, delete, and real-time pricing in Indian Rupees (₹).
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          {/* Load Shoreline Vista & Bar Menu Button */}
+          <button
+            onClick={handleLoadShorelineMenu}
+            disabled={loadingShoreline}
+            className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-amber-500/25 transition-all cursor-pointer disabled:opacity-50"
+            title="Import all categories & dishes from Shoreline Vista & Waves Bar PDF"
+          >
+            {loadingShoreline ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            <span>Load Shoreline Vista & Bar Menu</span>
+          </button>
+
           {items.length > 0 && (
             <button
               onClick={() => setIsClearModalOpen(true)}
               className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
-              <span>Clear All Menu</span>
+              <span>Clear All</span>
             </button>
           )}
 
@@ -352,7 +536,7 @@ export default function AdminMenuPage() {
           <button
             onClick={() => {
               if (categories.length === 0) {
-                toast.info('Please create at least one category first before adding dishes.');
+                toast.info('Please create at least one category first or load the Shoreline menu.');
                 setIsCatModalOpen(true);
                 return;
               }
@@ -366,13 +550,67 @@ export default function AdminMenuPage() {
         </div>
       </div>
 
+      {/* Menu Section Switcher: All | Multicuisine Restaurant | Waves Bar */}
+      <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-900 border border-slate-800 rounded-2xl max-w-xl">
+        <button
+          onClick={() => {
+            setSectionFilter('all');
+            setSelectedCat('all');
+          }}
+          className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+            sectionFilter === 'all'
+              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span>All Menus</span>
+          <span className="text-[10px] opacity-80">({items.length})</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setSectionFilter('food');
+            setSelectedCat('all');
+          }}
+          className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+            sectionFilter === 'food'
+              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Utensils className="w-3.5 h-3.5" />
+          <span className="truncate">Multicuisine</span>
+          <span className="text-[10px] opacity-80">({foodItemsCount})</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setSectionFilter('bar');
+            setSelectedCat('all');
+          }}
+          className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+            sectionFilter === 'bar'
+              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-black'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Wine className="w-3.5 h-3.5" />
+          <span className="truncate">Waves Bar</span>
+          <span className="text-[10px] opacity-80">({barItemsCount})</span>
+        </button>
+      </div>
+
       {/* Category Pills & Search */}
       <div className="flex flex-col sm:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
           <input
             type="text"
-            placeholder="Search dish name, description..."
+            placeholder={
+              sectionFilter === 'bar'
+                ? 'Search cocktails, mocktails, beers, whiskeys, wines...'
+                : 'Search dish name, description, ingredients...'
+            }
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
@@ -384,43 +622,56 @@ export default function AdminMenuPage() {
             onClick={() => setSelectedCat('all')}
             className={`px-3 py-2 rounded-xl text-xs font-semibold shrink-0 cursor-pointer transition-all ${
               selectedCat === 'all'
-                ? 'bg-amber-500 text-slate-950 font-bold'
+                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
                 : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
             }`}
           >
-            All Items ({items.length})
+            All Items ({filteredItems.length})
           </button>
-          {categories.map((c) => {
+
+          {visibleCategories.map((c) => {
             const count = items.filter((i) => i.categoryId === c.id).length;
+            const isSelected = selectedCat === c.id;
             return (
               <div key={c.id} className="inline-flex items-center shrink-0 group">
                 <button
                   onClick={() => setSelectedCat(c.id)}
                   className={`px-3 py-2 rounded-l-xl text-xs font-semibold cursor-pointer transition-all flex items-center space-x-1.5 ${
-                    selectedCat === c.id
-                      ? 'bg-amber-500 text-slate-950 font-bold'
+                    isSelected
+                      ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
                       : 'bg-slate-900 border-y border-l border-slate-800 text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   <span>{c.name}</span>
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                      selectedCat === c.id ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      isSelected ? 'bg-slate-950 text-amber-400' : 'bg-slate-800 text-slate-500'
                     }`}
                   >
                     {count}
                   </span>
                 </button>
                 <button
-                  onClick={() => handleDeleteCategory(c.id, c.name)}
-                  title={`Delete category "${c.name}"`}
-                  className={`px-1.5 py-2 rounded-r-xl text-xs transition-all border-y border-r cursor-pointer ${
-                    selectedCat === c.id
-                      ? 'bg-amber-500 text-slate-950 border-amber-500 hover:bg-amber-600'
-                      : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-red-400 hover:bg-red-500/10'
+                  onClick={() => handleOpenEditCatModal(c)}
+                  title={`Edit Category: ${c.name}`}
+                  className={`px-1.5 py-2 text-xs transition-all border-y ${
+                    isSelected
+                      ? 'bg-amber-500 text-slate-950 border-amber-500 hover:bg-amber-400'
+                      : 'bg-slate-900 text-slate-500 hover:text-amber-400 border-slate-800'
                   }`}
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <Pencil className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(c.id, c.name)}
+                  title={`Delete Category: ${c.name}`}
+                  className={`px-2 py-2 rounded-r-xl text-xs transition-all border-y border-r ${
+                    isSelected
+                      ? 'bg-amber-500 text-slate-950 border-amber-500 hover:bg-amber-400'
+                      : 'bg-slate-900 text-slate-500 hover:text-red-400 border-slate-800'
+                  }`}
+                >
+                  <X className="w-3 h-3" />
                 </button>
               </div>
             );
@@ -443,44 +694,68 @@ export default function AdminMenuPage() {
           <p className="text-xs">Loading menu catalog...</p>
         </div>
       ) : categories.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-slate-900 border border-slate-800 text-slate-400 space-y-4 max-w-lg mx-auto">
+        <div className="p-10 sm:p-12 text-center rounded-3xl bg-slate-900 border border-slate-800 text-slate-400 space-y-4 max-w-lg mx-auto">
           <div className="inline-flex p-4 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            <FolderPlus className="w-8 h-8" />
+            <Sparkles className="w-8 h-8" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">Create Your First Menu Category</h3>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Before adding dishes, organize your menu into categories (e.g. <em>Starters, Main Course, Biryani, Breads, Beverages, Desserts</em>).
+            <h3 className="text-lg font-bold text-white">Load Official Shoreline Vista Menu</h3>
+            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Import the complete official menu from the Shoreline Vista Multicuisine and Waves Bar PDFs with one click.
             </p>
           </div>
-          <button
-            onClick={() => setIsCatModalOpen(true)}
-            className="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs inline-flex items-center space-x-2 transition-all cursor-pointer shadow-lg shadow-amber-500/20"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ Create Category Now</span>
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+            <button
+              onClick={handleLoadShorelineMenu}
+              disabled={loadingShoreline}
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs inline-flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-lg shadow-amber-500/20 disabled:opacity-50"
+            >
+              {loadingShoreline ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              <span>Load Full Menu from PDF</span>
+            </button>
+            <button
+              onClick={() => setIsCatModalOpen(true)}
+              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs inline-flex items-center justify-center space-x-2 transition-all cursor-pointer border border-slate-700"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Custom Category</span>
+            </button>
+          </div>
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="p-12 text-center rounded-3xl bg-slate-900 border border-slate-800 text-slate-400 space-y-3">
           <Utensils className="w-8 h-8 mx-auto text-slate-600" />
-          <p className="text-xs">No dishes added yet in this category.</p>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs inline-flex items-center space-x-1.5 transition-all cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Dish with Photo Upload</span>
-          </button>
+          <p className="text-xs">No dishes found matching your current filter.</p>
+          <div className="flex items-center justify-center space-x-2">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs inline-flex items-center space-x-1.5 transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Dish</span>
+            </button>
+            <button
+              onClick={handleLoadShorelineMenu}
+              disabled={loadingShoreline}
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs inline-flex items-center space-x-1.5 transition-all cursor-pointer border border-amber-500/30"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Load PDF Menu</span>
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {filteredItems.map((item) => (
             <div
               key={item.id}
               className={`p-4 rounded-2xl bg-slate-900/90 border ${
                 item.isAvailable ? 'border-slate-800' : 'border-red-500/30 opacity-70'
-              } flex flex-col justify-between space-y-3 transition-all hover:border-slate-700`}
+              } flex flex-col justify-between space-y-3 transition-all hover:border-slate-700 shadow-md`}
             >
               <div className="flex gap-3">
                 <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-slate-800 relative flex items-center justify-center border border-slate-700/60">
@@ -503,16 +778,25 @@ export default function AdminMenuPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-1">
                     <h3 className="font-bold text-sm text-white truncate">{item.name}</h3>
-                    <button
-                      onClick={() => handleDeleteItem(item.id, item.name)}
-                      title="Delete dish"
-                      className="text-slate-500 hover:text-red-400 transition-colors p-1 -mr-1 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center space-x-1 shrink-0 -mr-1">
+                      <button
+                        onClick={() => handleOpenEditModal(item)}
+                        title="Edit dish details & price"
+                        className="text-slate-400 hover:text-amber-400 transition-colors p-1 cursor-pointer"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteItem(item.id, item.name)}
+                        title="Delete dish"
+                        className="text-slate-500 hover:text-red-400 transition-colors p-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">
-                    {item.description || 'Freshly prepared by hotel culinary team.'}
+                    {item.description || 'Prepared by Shoreline Vista culinary team.'}
                   </p>
                   <div className="flex items-center space-x-2 mt-2">
                     <span className="font-black text-sm text-amber-400">
@@ -522,7 +806,13 @@ export default function AdminMenuPage() {
                       <Clock className="w-2.5 h-2.5" />
                       <span>{item.prepTimeMin}m</span>
                     </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-medium">
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                        item.isVeg
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                      }`}
+                    >
                       {item.isVeg ? 'Veg' : 'Non-Veg'}
                     </span>
                   </div>
@@ -536,7 +826,7 @@ export default function AdminMenuPage() {
                     item.isAvailable ? 'text-emerald-400' : 'text-red-400'
                   }`}
                 >
-                  {item.isAvailable ? 'Available' : 'Sold Out'}
+                  {item.isAvailable ? 'In Stock' : 'Sold Out'}
                 </span>
 
                 <button
@@ -565,13 +855,15 @@ export default function AdminMenuPage() {
         </div>
       )}
 
-      {/* Modal: Add Menu Dish (With Photo Upload) */}
+      {/* ============================================================== */}
+      {/* MODAL 1: ADD MENU DISH                                          */}
+      {/* ============================================================== */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white"
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 text-slate-400 hover:text-white"
             >
               <X className="w-5 h-5" />
             </button>
@@ -581,11 +873,10 @@ export default function AdminMenuPage() {
               <h2 className="text-lg font-bold text-white">Add New Menu Dish</h2>
             </div>
             <p className="text-xs text-slate-400 mb-4">
-              Upload a photograph from your phone or device and specify the rate in Rupees (₹).
+              Add a dish with price in Indian Rupees (₹) and optional photo upload.
             </p>
 
             <form onSubmit={handleCreateItem} className="space-y-4">
-              {/* Category Selector + Inline Creator */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-semibold text-slate-300">
@@ -619,7 +910,11 @@ export default function AdminMenuPage() {
                         disabled={creatingInlineCat}
                         className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg flex items-center space-x-1 disabled:opacity-50"
                       >
-                        {creatingInlineCat ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                        {creatingInlineCat ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Check className="w-3 h-3" />
+                        )}
                         <span>Save</span>
                       </button>
                     </div>
@@ -648,74 +943,53 @@ export default function AdminMenuPage() {
                   <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 p-2.5 flex items-center gap-3">
                     <img
                       src={imagePreview}
-                      alt="Dish Preview"
-                      className="w-20 h-20 rounded-xl object-cover bg-slate-800 shrink-0 border border-slate-800"
+                      alt="Preview"
+                      className="w-16 h-16 rounded-xl object-cover shrink-0 border border-slate-800"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-white truncate">Photo attached successfully</p>
-                      <p className="text-[11px] text-emerald-400 mt-0.5">✓ Ready for in-room QR menu</p>
-                      <button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        className="mt-2 text-[11px] text-red-400 hover:text-red-300 font-semibold flex items-center space-x-1 cursor-pointer"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        <span>Change / Remove Photo</span>
-                      </button>
+                      <div className="text-xs font-bold text-white truncate">Photo Uploaded</div>
+                      <div className="text-[10px] text-emerald-400 font-semibold">
+                        Ready for instant guest ordering
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setImagePreview('')}
+                      className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-bold"
+                    >
+                      Remove
+                    </button>
                   </div>
                 ) : (
-                  <label className="border-2 border-dashed border-slate-800 hover:border-amber-500/50 bg-slate-950/70 hover:bg-slate-950 transition-all rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer group text-center">
+                  <label className="border-2 border-dashed border-slate-700 hover:border-amber-500/60 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-colors bg-slate-950/40">
+                    <Upload className="w-6 h-6 text-slate-400 mb-1" />
+                    <span className="text-xs font-bold text-amber-300">
+                      {uploadingImage ? 'Compressing photo...' : 'Click to upload photo'}
+                    </span>
+                    <span className="text-[10px] text-slate-500 mt-0.5">
+                      JPG, PNG, WEBP (auto-compressed)
+                    </span>
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={handleImageFileChange}
+                      onChange={(e) => handleImageFileChange(e, false)}
                       className="hidden"
+                      disabled={uploadingImage}
                     />
-                    {uploadingImage ? (
-                      <div className="flex items-center space-x-2 text-amber-400 text-xs">
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Processing image...</span>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                          <Upload className="w-5 h-5" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-200 group-hover:text-amber-400 transition-colors">
-                          Click to upload dish photo
-                        </span>
-                        <span className="text-[11px] text-slate-500 mt-0.5">
-                          Select JPG, PNG, or photo from your phone/camera
-                        </span>
-                      </>
-                    )}
                   </label>
                 )}
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Dish / Item Name
+                  Dish Name <span className="text-amber-400">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Paneer Butter Masala, Chicken Dum Biryani, Masala Dosa"
+                  required
+                  placeholder="e.g. Chicken Ghee Roast, Paneer Tikka"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Description & Ingredients
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Describe ingredients, portion size, flavor notes..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
                 />
               </div>
@@ -723,23 +997,25 @@ export default function AdminMenuPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1">
-                    Price in Rupees (₹)
+                    Rate / Price in Rupees (₹) <span className="text-amber-400">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-amber-400 font-bold text-xs">₹</span>
+                    <span className="absolute left-3 top-2 text-xs text-amber-400 font-bold">₹</span>
                     <input
                       type="number"
+                      step="1"
+                      required
                       placeholder="250"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-semibold"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-xs text-white font-bold placeholder-slate-500 focus:outline-none focus:border-amber-500"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1">
-                    Est. Prep Time (mins)
+                    Prep Time (Minutes)
                   </label>
                   <input
                     type="number"
@@ -748,6 +1024,19 @@ export default function AdminMenuPage() {
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Description / Ingredients
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Describe the flavours, preparation style, or portion size..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                />
               </div>
 
               <div className="flex items-center space-x-3 p-3 bg-slate-950 rounded-xl border border-slate-800">
@@ -785,7 +1074,193 @@ export default function AdminMenuPage() {
         </div>
       )}
 
-      {/* Modal: Create Category */}
+      {/* ============================================================== */}
+      {/* MODAL 2: EDIT MENU DISH                                         */}
+      {/* ============================================================== */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center space-x-2 text-amber-400 mb-1">
+              <Pencil className="w-5 h-5" />
+              <h2 className="text-lg font-bold text-white">Edit Menu Dish</h2>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Update rate, description, category, or photo. All changes save directly to the database.
+            </p>
+
+            <form onSubmit={handleUpdateItem} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Menu Category
+                </label>
+                <select
+                  value={editCategoryId}
+                  onChange={(e) => setEditCategoryId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Photo Upload Area */}
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Dish Photograph
+                </label>
+                {editImagePreview ? (
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 p-2.5 flex items-center gap-3">
+                    <img
+                      src={editImagePreview}
+                      alt="Preview"
+                      className="w-16 h-16 rounded-xl object-cover shrink-0 border border-slate-800"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-white truncate">Photograph Attached</div>
+                      <label className="text-[10px] text-amber-400 hover:underline cursor-pointer font-semibold block mt-0.5">
+                        Change photograph
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageFileChange(e, true)}
+                          className="hidden"
+                          disabled={editUploadingImage}
+                        />
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditImagePreview('')}
+                      className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-bold"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label className="border-2 border-dashed border-slate-700 hover:border-amber-500/60 rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-colors bg-slate-950/40">
+                    <Upload className="w-6 h-6 text-slate-400 mb-1" />
+                    <span className="text-xs font-bold text-amber-300">
+                      {editUploadingImage ? 'Compressing photo...' : 'Click to upload dish photo'}
+                    </span>
+                    <span className="text-[10px] text-slate-500 mt-0.5">
+                      JPG, PNG, WEBP (auto-compressed)
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageFileChange(e, true)}
+                      className="hidden"
+                      disabled={editUploadingImage}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Dish Name <span className="text-amber-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Chicken Ghee Roast"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">
+                    Rate / Price in Rupees (₹) <span className="text-amber-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-xs text-amber-400 font-bold">₹</span>
+                    <input
+                      type="number"
+                      step="1"
+                      required
+                      value={editPrice}
+                      onChange={(e) => setEditPrice(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-7 pr-3 py-2 text-xs text-white font-bold placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">
+                    Prep Time (Minutes)
+                  </label>
+                  <input
+                    type="number"
+                    value={editPrepTimeMin}
+                    onChange={(e) => setEditPrepTimeMin(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Description / Ingredients
+                </label>
+                <textarea
+                  rows={2}
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 bg-slate-950 rounded-xl border border-slate-800">
+                <input
+                  type="checkbox"
+                  id="editVegToggle"
+                  checked={editIsVeg}
+                  onChange={(e) => setEditIsVeg(e.target.checked)}
+                  className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 accent-amber-500"
+                />
+                <label htmlFor="editVegToggle" className="text-xs font-semibold text-slate-300 cursor-pointer">
+                  Vegetarian Dish (Green Tag)
+                </label>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingEdit}
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center space-x-2 disabled:opacity-50"
+                >
+                  {submittingEdit && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Update Dish</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL 3: CREATE CATEGORY                                        */}
+      {/* ============================================================== */}
       {isCatModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
           <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -801,7 +1276,7 @@ export default function AdminMenuPage() {
               <h2 className="text-lg font-bold text-white">Create New Category</h2>
             </div>
             <p className="text-xs text-slate-400 mb-5">
-              Categories group dishes on the in-room QR menu (e.g. Starters, Tandoor & Curries, Biryani, Beverages, Desserts).
+              Categories group dishes on the in-room QR menu (e.g. Starters, Biryani, Curries, Waves Bar).
             </p>
 
             <form onSubmit={handleCreateCategory} className="space-y-4">
@@ -824,7 +1299,7 @@ export default function AdminMenuPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Freshly spiced clay-oven delicacies"
+                  placeholder="e.g. Freshly spiced coastal delicacies"
                   value={newCatDesc}
                   onChange={(e) => setNewCatDesc(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
@@ -853,32 +1328,105 @@ export default function AdminMenuPage() {
         </div>
       )}
 
-      {/* Modal: Clear All Confirmation */}
-      {isClearModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-red-500/30 w-full max-w-md rounded-3xl p-6 shadow-2xl relative text-center">
-            <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
+      {/* ============================================================== */}
+      {/* MODAL 4: EDIT CATEGORY                                          */}
+      {/* ============================================================== */}
+      {isEditCatModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setIsEditCatModalOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-            <h2 className="text-lg font-bold text-white">Clear All Menu Items?</h2>
-            <p className="text-xs text-slate-400 mt-2 mb-6 leading-relaxed">
-              This will permanently delete all current menu items and categories from the database so you can add your custom menu manually.
+            <div className="flex items-center space-x-2 text-amber-400 mb-2">
+              <Pencil className="w-5 h-5" />
+              <h2 className="text-lg font-bold text-white">Edit Category</h2>
+            </div>
+            <p className="text-xs text-slate-400 mb-5">
+              Update the name or description of this category.
             </p>
 
-            <div className="flex items-center justify-center space-x-3">
+            <form onSubmit={handleUpdateCategory} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Category Name <span className="text-amber-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editCatName}
+                  onChange={(e) => setEditCatName(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Category Description (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={editCatDesc}
+                  onChange={(e) => setEditCatDesc(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditCatModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingEditCat}
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center space-x-2 disabled:opacity-50"
+                >
+                  {submittingEditCat && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Update Category</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL 5: CLEAR ALL CONFIRMATION                                 */}
+      {/* ============================================================== */}
+      {isClearModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-900 border border-red-500/30 w-full max-w-md rounded-3xl p-6 shadow-2xl relative space-y-4">
+            <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl w-fit">
+              <Trash2 className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-white">Clear Entire Menu?</h3>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                This will delete all {items.length} menu dishes and {categories.length} categories from the database.
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-2">
               <button
                 type="button"
                 onClick={() => setIsClearModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white border border-slate-800"
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={clearing}
                 onClick={handleClearAllMenu}
-                className="px-5 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-xs flex items-center space-x-2 disabled:opacity-50"
+                disabled={clearing}
+                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center space-x-2 disabled:opacity-50"
               >
                 {clearing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Yes, Clear Everything</span>

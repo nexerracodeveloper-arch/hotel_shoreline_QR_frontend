@@ -113,13 +113,18 @@ export const api = {
     getCategories: () => request('/admin/menu/categories'),
     createCategory: (body: { name: string; description?: string; sortOrder?: number; icon?: string }) =>
       request('/admin/menu/categories', { method: 'POST', body: JSON.stringify(body) }),
+    updateCategory: (id: string, body: { name?: string; description?: string; sortOrder?: number; icon?: string }) =>
+      request(`/admin/menu/categories/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     deleteCategory: (id: string) => request(`/admin/menu/categories/${id}`, { method: 'DELETE' }),
     getMenuItems: (categoryId?: string) =>
       request(`/admin/menu/items${categoryId ? `?categoryId=${categoryId}` : ''}`),
     createMenuItem: (body: any) => request('/admin/menu/items', { method: 'POST', body: JSON.stringify(body) }),
+    updateMenuItem: (id: string, body: any) =>
+      request(`/admin/menu/items/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     deleteMenuItem: (id: string) => request(`/admin/menu/items/${id}`, { method: 'DELETE' }),
     deleteAllMenuItems: () => request('/admin/menu/items', { method: 'DELETE' }),
     clearAllMenu: () => request('/admin/menu/clear-all', { method: 'POST' }),
+    resetShorelineMenu: () => request('/admin/menu/reset-shoreline', { method: 'POST' }),
     toggleStock: (id: string) => request(`/admin/menu/items/${id}/toggle-stock`, { method: 'PATCH' }),
     getOrders: (status?: string) => request(`/admin/orders${status ? `?status=${status}` : ''}`),
     updateOrderStatus: (id: string, status: string) =>
