@@ -20,6 +20,7 @@ import {
   ChevronRight,
   User,
   MoreHorizontal,
+  MessageCircle,
 } from 'lucide-react';
 import { clearAuthToken, getAuthToken, api } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
@@ -108,6 +109,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/menu', label: 'Menu Catalog', icon: BookOpen },
     { href: '/admin/bookings', label: 'Bookings & Check-In', icon: CalendarCheck },
     { href: '/admin/requests', label: 'Service Desk', icon: BellRing },
+    { href: '/admin/whatsapp', label: 'WhatsApp Alerts', icon: MessageCircle },
   ];
 
   // Mobile Bottom Navigation Bar primary 4 tabs

@@ -132,5 +132,12 @@ export const api = {
     getRequests: () => request('/admin/requests'),
     updateRequestStatus: (id: string, status: string) =>
       request(`/admin/requests/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    getWhatsAppStatus: () => request('/admin/whatsapp/status'),
+    getWhatsAppGroups: () => request('/admin/whatsapp/groups'),
+    updateWhatsAppSettings: (body: any) =>
+      request('/admin/whatsapp/settings', { method: 'POST', body: JSON.stringify(body) }),
+    sendWhatsAppTest: () => request('/admin/whatsapp/test', { method: 'POST' }),
+    restartWhatsApp: () => request('/admin/whatsapp/restart', { method: 'POST' }),
+    logoutWhatsApp: () => request('/admin/whatsapp/logout', { method: 'POST' }),
   },
 };
