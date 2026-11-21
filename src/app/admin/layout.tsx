@@ -127,10 +127,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Link href="/admin" className="flex items-center space-x-2.5">
-              <div className="p-1.5 sm:p-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl">
-                <Hotel className="w-5 h-5" />
+              <div className="p-0.5 bg-gradient-to-br from-[#dfba73] to-[#8c6527] rounded-xl shadow-xs shrink-0">
+                <img
+                  src="/logo.png"
+                  alt="Hotel Shoreline Vista"
+                  className="h-9 sm:h-10 w-auto object-contain rounded-lg"
+                />
               </div>
-              <div>
+              <div className="hidden sm:block">
                 <span className="font-extrabold text-sm sm:text-base text-white tracking-tight block leading-tight">
                   Shoreline Vista
                 </span>

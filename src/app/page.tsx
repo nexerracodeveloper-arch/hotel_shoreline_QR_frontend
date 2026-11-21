@@ -70,14 +70,18 @@ export default function RootLoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-slate-100 selection:bg-amber-100 selection:text-amber-900">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
-        <div className="inline-flex p-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl mb-4 shadow-lg shadow-amber-500/10">
-          <Hotel className="w-8 h-8" />
+        <div className="inline-block p-1 bg-gradient-to-br from-[#dfba73] via-[#b88e44] to-[#8c6527] rounded-3xl mb-4 shadow-2xl shadow-black/60">
+          <img
+            src="/logo.png"
+            alt="Hotel Shoreline Vista"
+            className="h-24 sm:h-28 w-auto object-contain rounded-2xl mx-auto"
+          />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+        <h1 className="text-xl sm:text-2xl font-cinzel font-bold text-white tracking-wider uppercase">
           Hotel Operations Portal
         </h1>
-        <p className="mt-2 text-xs sm:text-sm text-slate-400">
-          Protected platform. Please sign in with authorized hotel staff credentials to proceed.
+        <p className="mt-1.5 text-xs text-amber-400 font-semibold tracking-wide">
+          Waves Multicuisine & Bar • Authorized Staff Access
         </p>
       </div>
 

@@ -235,8 +235,12 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
   if (loading) {
     return (
       <div className="min-h-screen parchment-bg flex flex-col items-center justify-center p-6 text-center text-stone-900">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#dfba73] via-[#b88e44] to-[#8c6527] text-white flex items-center justify-center font-cinzel font-black text-xl shadow-xl shadow-amber-900/10 mb-4 animate-pulse">
-          SV
+        <div className="p-1 rounded-2xl bg-gradient-to-br from-[#dfba73] to-[#8c6527] shadow-xl shadow-amber-900/15 mb-4 animate-pulse">
+          <img
+            src="/logo.png"
+            alt="Hotel Shoreline Vista"
+            className="h-20 sm:h-24 w-auto object-contain rounded-xl mx-auto"
+          />
         </div>
         <Loader2 className="w-6 h-6 text-[#b88e44] animate-spin mb-3" />
         <h2 className="font-cinzel text-lg font-bold text-stone-900 tracking-wider uppercase">
@@ -317,10 +321,13 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
           {/* Top Brand & Location */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              {/* Official Gold SV Monogram */}
-              <div className="w-11 h-11 bg-gradient-to-br from-[#dfba73] via-[#b88e44] to-[#8c6527] text-white rounded-2xl flex flex-col items-center justify-center font-cinzel font-black text-sm shadow-md shadow-amber-900/15 shrink-0">
-                <span className="leading-none">SV</span>
-                <span className="w-4 h-0.5 bg-[#fff2cc] mt-0.5 rounded-full" />
+              {/* Official Hotel Shoreline Vista Logo */}
+              <div className="p-1 rounded-2xl bg-gradient-to-br from-[#dfba73] via-[#b88e44] to-[#8c6527] shadow-md shadow-amber-900/10 shrink-0">
+                <img
+                  src="/logo.png"
+                  alt="Hotel Shoreline Vista"
+                  className="h-12 sm:h-14 w-auto object-contain rounded-xl"
+                />
               </div>
               <div>
                 <h1 className="font-cinzel font-bold text-sm sm:text-lg tracking-wide text-stone-900 uppercase flex items-center gap-1.5">

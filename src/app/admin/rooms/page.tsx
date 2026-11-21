@@ -424,6 +424,11 @@ export default function AdminRoomsPage() {
               ref={printRef}
               className="printable-standee-area bg-white text-slate-900 p-4 sm:p-6 rounded-2xl border-2 border-slate-200 text-center shadow-lg mx-auto w-full max-w-sm"
             >
+              <img
+                src="/logo.png"
+                alt="Hotel Shoreline Vista"
+                className="h-16 mx-auto mb-2.5 object-contain rounded-xl shadow-xs"
+              />
               <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">
                 HOTEL SHORELINE VISTA
               </div>
