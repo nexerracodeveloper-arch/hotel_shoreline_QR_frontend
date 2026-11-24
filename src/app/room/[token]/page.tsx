@@ -246,9 +246,14 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
         <h2 className="font-cinzel text-lg font-bold text-stone-900 tracking-wider uppercase">
           Hotel Shoreline Vista
         </h2>
-        <p className="font-serif-luxury italic text-xs text-[#8c6527] mt-0.5 tracking-wide">
-          Waves Multicuisine & Bar
-        </p>
+        <div className="flex items-center justify-center gap-1.5 mt-0.5">
+          <span className="font-serif-luxury font-black text-sm tracking-wider text-[#8c6527] uppercase">
+            WAVES
+          </span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8c6527]">
+            Multicuisine Bar and Restaurant
+          </span>
+        </div>
         <p className="text-[11px] text-stone-500 mt-2">Opening in-room dining catalog...</p>
       </div>
     );
@@ -334,11 +339,11 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                   <span>Hotel Shoreline Vista</span>
                 </h1>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="font-serif-luxury italic text-xs sm:text-sm font-semibold text-[#8c6527]">
-                    waves
+                  <span className="font-serif-luxury font-black text-xs sm:text-sm tracking-wider text-[#8c6527] uppercase">
+                    WAVES
                   </span>
-                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#8c6527] bg-[#f5ebd6] px-1.5 py-0.2 rounded border border-[#dfc07b]/40">
-                    Multicuisine & Bar
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#8c6527] bg-[#f5ebd6] px-1.5 py-0.5 rounded border border-[#dfc07b]/40">
+                    Multicuisine Bar and Restaurant
                   </span>
                 </div>
               </div>
@@ -402,17 +407,20 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
           {/* Room Location Banner */}
           <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#ffffff] via-[#faf6ed] to-[#f4eee2] border border-[#dfc07b]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
             <div>
-              <div className="text-[10px] uppercase font-bold tracking-widest text-[#8c6527]">
-                Verified In-Room Dining Location
+              <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest text-[#8c6527]">
+                <span className="bg-[#b88e44]/15 text-[#8c6527] px-2 py-0.5 rounded-full font-black border border-[#b88e44]/30">
+                  PREMIUM ROOM
+                </span>
+                <span>Verified In-Room Dining Location</span>
               </div>
-              <div className="text-2xl sm:text-3xl font-cinzel font-black text-stone-900 tracking-tight flex items-baseline gap-2">
+              <div className="text-2xl sm:text-3xl font-cinzel font-black text-stone-900 tracking-tight flex items-baseline gap-2 mt-1">
                 <span>ROOM {room.roomNumber}</span>
                 <span className="text-xs font-sans text-stone-600 font-semibold tracking-normal">
                   (Floor {room.floor})
                 </span>
               </div>
               <div className="text-xs text-stone-600 mt-0.5">
-                {room.type.replace(/_/g, ' ')} Suite • In-Room QR Service Active
+                Premium Room Suite • In-Room QR Service Active
               </div>
             </div>
 
@@ -480,7 +488,29 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
         {/* TAB 1: IN-ROOM DINING MENU                                      */}
         {/* ============================================================== */}
         {activeTab === 'menu' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
+            {/* Gourmet Food & Dining Hero Banner */}
+            <div className="relative overflow-hidden rounded-2xl border border-[#dfc07b]/60 shadow-sm">
+              <img
+                src="/food-banner.jpg"
+                alt="Waves Multicuisine Delicacies"
+                className="w-full h-28 sm:h-36 object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/30 to-transparent flex flex-col justify-end p-3 sm:p-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-serif-luxury font-black text-white text-base sm:text-lg tracking-wider uppercase drop-shadow">
+                    WAVES
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded border border-amber-400/40">
+                    Multicuisine Bar and Restaurant
+                  </span>
+                </div>
+                <p className="text-white/90 text-[11px] sm:text-xs mt-0.5 max-w-lg drop-shadow font-medium">
+                  Fresh Coastal Delicacies, Global Tandoor, Curries & Premium Spirits served to your room.
+                </p>
+              </div>
+            </div>
+
             {/* Sticky Search & Filter Bar */}
             <div className="sticky top-0 z-30 bg-[#faf7f0]/95 backdrop-blur-md pt-2 pb-3 -mx-3 px-3 sm:-mx-6 sm:px-6 border-b border-[#dfc07b]/30 space-y-2.5">
               {/* Menu Section Switcher: All | Multicuisine Restaurant | Waves Bar */}

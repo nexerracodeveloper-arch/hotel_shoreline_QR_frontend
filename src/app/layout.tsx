@@ -3,9 +3,9 @@ import './globals.css';
 import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
-  title: 'Hotel Shoreline Vista | Waves Multicuisine & Bar In-Room Dining',
+  title: 'Hotel Shoreline Vista | WAVES Multicuisine Bar and Restaurant',
   description:
-    'Hotel Shoreline Vista Manipal - In-Room QR Dining, Waves Multicuisine Restaurant, Waves Bar, Concierge Services & Operations Portal',
+    'Hotel Shoreline Vista Manipal - In-Room QR Dining, WAVES Multicuisine Bar and Restaurant & Operations Portal',
 };
 
 export default function RootLayout({
