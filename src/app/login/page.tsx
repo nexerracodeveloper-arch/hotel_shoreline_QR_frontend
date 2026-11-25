@@ -25,7 +25,11 @@ export default function LoginPage() {
       if (res.success && res.token) {
         setAuthToken(res.token);
         toast.success(`Welcome back, ${res.user.name}!`);
-        router.push('/admin');
+        if (res.user.role === 'KITCHEN_STAFF' || res.user.email?.toLowerCase().includes('order')) {
+          router.push('/admin/order-desk');
+        } else {
+          router.push('/admin');
+        }
       } else {
         toast.error(res.error || 'Authentication failed');
       }
@@ -33,6 +37,16 @@ export default function LoginPage() {
       toast.error(err.message || 'Failed to login');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSelectRole = (selectedRole: 'orders' | 'admin') => {
+    if (selectedRole === 'orders') {
+      setEmail('orders@hotel.com');
+      setPassword('order123');
+    } else {
+      setEmail('admin@hotel.com');
+      setPassword('admin123');
     }
   };
 
@@ -56,6 +70,39 @@ export default function LoginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
         <div className="bg-slate-900/90 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-2xl backdrop-blur-sm space-y-6">
+          {/* Quick Staff Login Preset Selector */}
+          <div>
+            <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-2">
+              Select Staff Login Mode:
+            </label>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950 border border-slate-800 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => handleSelectRole('orders')}
+                className={`py-2 px-2 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center justify-center cursor-pointer ${
+                  email === 'orders@hotel.com'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>Room Orders Desk</span>
+                <span className="text-[9px] opacity-80 font-normal">Order Details & Rooms</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectRole('admin')}
+                className={`py-2 px-2 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center justify-center cursor-pointer ${
+                  email === 'admin@hotel.com'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>Master Admin</span>
+                <span className="text-[9px] opacity-80 font-normal">Full Operations</span>
+              </button>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-xs font-semibold text-slate-300 block mb-1.5">

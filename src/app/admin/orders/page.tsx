@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   UtensilsCrossed,
   Clock,
@@ -13,6 +14,8 @@ import {
   ChevronRight,
   Loader2,
   X,
+  ChefHat,
+  Radio,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -117,7 +120,15 @@ export default function AdminOrdersPage() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
+          <Link
+            href="/admin/order-desk"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 transition-all shadow-md shadow-amber-500/20"
+          >
+            <ChefHat className="w-4 h-4" />
+            <span>Open Order Terminal Desk</span>
+          </Link>
+
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
             className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 border transition-all cursor-pointer ${

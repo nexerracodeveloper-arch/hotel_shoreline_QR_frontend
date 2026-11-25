@@ -50,6 +50,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         if (res.success && res.user) {
           setIsAuthenticated(true);
           setCurrentUser(res.user);
+          if (res.user.role === 'KITCHEN_STAFF' && pathname !== '/admin/order-desk') {
+            router.replace('/admin/order-desk');
+          }
         } else {
           clearAuthToken();
           router.replace('/');
@@ -102,9 +105,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
+  // Pure focused terminal mode for Order Desk without standard admin chrome
+  if (pathname === '/admin/order-desk') {
+    return <>{children}</>;
+  }
+
   const navLinks = [
     { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-    { href: '/admin/orders', label: 'Live Orders', icon: UtensilsCrossed },
+    { href: '/admin/order-desk', label: 'Order Live Desk', icon: Radio },
+    { href: '/admin/orders', label: 'Orders Queue', icon: UtensilsCrossed },
     { href: '/admin/rooms', label: 'Rooms & QR Studio', icon: BedDouble },
     { href: '/admin/menu', label: 'Menu Catalog', icon: BookOpen },
     { href: '/admin/bookings', label: 'Bookings & Check-In', icon: CalendarCheck },
@@ -115,7 +124,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Mobile Bottom Navigation Bar primary 4 tabs
   const mobileBottomTabs = [
     { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-    { href: '/admin/orders', label: 'Orders', icon: UtensilsCrossed },
+    { href: '/admin/order-desk', label: 'Order Desk', icon: Radio },
     { href: '/admin/rooms', label: 'Rooms', icon: BedDouble },
     { href: '/admin/menu', label: 'Menu', icon: BookOpen },
   ];
