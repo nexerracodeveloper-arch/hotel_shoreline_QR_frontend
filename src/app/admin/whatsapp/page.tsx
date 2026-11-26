@@ -29,9 +29,11 @@ interface GroupInfo {
 
 interface WhatsAppSettings {
   enabled: boolean;
-  targetType: 'group' | 'self' | 'custom';
+  targetType: 'master_admin' | 'both_numbers' | 'group' | 'self' | 'custom';
   targetJid: string;
   targetName: string;
+  masterAdminPhone?: string; // Number 1: Entered in Master Admin form
+  orderDeskPhone?: string;   // Number 2: Connected / designated for Room Order Desk
   customPhone?: string;
   notifyOnServiceRequests: boolean;
 }
@@ -59,8 +61,10 @@ export default function AdminWhatsAppPage() {
 
   // Editable settings form state
   const [enabled, setEnabled] = useState(true);
-  const [targetType, setTargetType] = useState<'group' | 'self' | 'custom'>('group');
+  const [targetType, setTargetType] = useState<'master_admin' | 'both_numbers' | 'group' | 'self' | 'custom'>('master_admin');
   const [targetJid, setTargetJid] = useState('');
+  const [masterAdminPhone, setMasterAdminPhone] = useState('');
+  const [orderDeskPhone, setOrderDeskPhone] = useState('');
   const [customPhone, setCustomPhone] = useState('');
   const [notifyOnServiceRequests, setNotifyOnServiceRequests] = useState(true);
 
@@ -72,8 +76,10 @@ export default function AdminWhatsAppPage() {
         setData(res);
         if (res.settings) {
           setEnabled(res.settings.enabled ?? true);
-          setTargetType(res.settings.targetType ?? 'group');
+          setTargetType(res.settings.targetType ?? 'master_admin');
           setTargetJid(res.settings.targetJid ?? '');
+          setMasterAdminPhone(res.settings.masterAdminPhone ?? '');
+          setOrderDeskPhone(res.settings.orderDeskPhone ?? '');
           setCustomPhone(res.settings.customPhone ?? '');
           setNotifyOnServiceRequests(res.settings.notifyOnServiceRequests ?? true);
         }
@@ -95,8 +101,10 @@ export default function AdminWhatsAppPage() {
       setData((prev) => ({ ...prev, ...updated }));
       if (updated.settings) {
         setEnabled(updated.settings.enabled ?? true);
-        setTargetType(updated.settings.targetType ?? 'group');
+        setTargetType(updated.settings.targetType ?? 'master_admin');
         setTargetJid(updated.settings.targetJid ?? '');
+        setMasterAdminPhone(updated.settings.masterAdminPhone ?? '');
+        setOrderDeskPhone(updated.settings.orderDeskPhone ?? '');
         setCustomPhone(updated.settings.customPhone ?? '');
         setNotifyOnServiceRequests(updated.settings.notifyOnServiceRequests ?? true);
       }
@@ -127,6 +135,8 @@ export default function AdminWhatsAppPage() {
         targetType,
         targetJid,
         targetName: selectedGroup ? selectedGroup.name : '',
+        masterAdminPhone,
+        orderDeskPhone,
         customPhone,
         notifyOnServiceRequests,
       });
@@ -395,14 +405,92 @@ export default function AdminWhatsAppPage() {
               </label>
             </div>
 
+            {/* 2-Number Architecture Workflow Card */}
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2">
+              <div className="flex items-center space-x-2 text-amber-400 font-bold uppercase tracking-wider text-[11px]">
+                <Smartphone className="w-4 h-4 text-amber-400" />
+                <span>2-Number WhatsApp System Architecture</span>
+              </div>
+              <p className="text-slate-300 leading-relaxed text-[11px]">
+                • <strong>Number 1 (Master Admin Form)</strong>: Enter your Master Admin WhatsApp number below. All incoming dining alerts are dispatched directly to this phone.<br />
+                • <strong>Number 2 (Room Order Desk Session)</strong>: Room Order Desk staff connects their WhatsApp at <a href="/admin/order-desk" className="text-amber-400 underline font-bold hover:text-amber-300">/admin/order-desk</a> by scanning the pairing QR code.<br />
+                • <strong>Automated Forwarding</strong>: Whenever a guest orders, the Order Desk's WhatsApp automatically forwards the order message to your Master Admin phone!
+              </p>
+            </div>
+
+            {/* Field: Master Admin WhatsApp Number (Number 1) */}
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+              <label className="text-xs font-bold text-white uppercase tracking-wider block">
+                Master Admin WhatsApp Number (Alert Recipient)
+              </label>
+              <div className="flex items-center space-x-2">
+                <span className="px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-400 font-mono">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  value={masterAdminPhone}
+                  onChange={(e) => setMasterAdminPhone(e.target.value)}
+                  placeholder="e.g. 9876543210 (10-digit number)"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-500 placeholder-slate-500"
+                />
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Incoming guest room orders from the connected Room Order Desk WhatsApp will be delivered to this phone.
+              </p>
+            </div>
+
             {/* Target Mode Selector */}
             <div className="space-y-4">
               <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                Notification Destination
+                Notification Delivery Mode
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Mode 1: WhatsApp Group */}
+                {/* Mode 1: Master Admin Phone */}
+                <button
+                  type="button"
+                  onClick={() => setTargetType('master_admin')}
+                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                    targetType === 'master_admin'
+                      ? 'bg-amber-500/10 border-amber-500 text-white shadow-lg'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center space-x-2">
+                      <Smartphone className="w-4 h-4 text-amber-400" />
+                      <span className="text-sm font-bold text-white">Master Admin Phone</span>
+                    </div>
+                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                      Recommended
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Sends directly from Room Order Desk to the Master Admin number entered above ({masterAdminPhone || 'Not set yet'}).
+                  </p>
+                </button>
+
+                {/* Mode 2: Both Numbers */}
+                <button
+                  type="button"
+                  onClick={() => setTargetType('both_numbers')}
+                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                    targetType === 'both_numbers'
+                      ? 'bg-amber-500/10 border-amber-500 text-white shadow-lg'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2 mb-1.5">
+                    <Users className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm font-bold text-white">Both Numbers</span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Sends to Master Admin phone AND also stays in the Order Desk phone's chat.
+                  </p>
+                </button>
+
+                {/* Mode 3: WhatsApp Group */}
                 <button
                   type="button"
                   onClick={() => setTargetType('group')}
@@ -412,39 +500,50 @@ export default function AdminWhatsAppPage() {
                       : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-amber-400" />
-                      <span className="text-sm font-bold text-white">WhatsApp Group</span>
-                    </div>
-                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                      Recommended
-                    </span>
+                  <div className="flex items-center space-x-2 mb-1.5">
+                    <Users className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm font-bold text-white">WhatsApp Group</span>
                   </div>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Guarantees <strong>loud ringtones & lock-screen banners</strong> on your single phone.
+                    Broadcasts orders to a shared WhatsApp Group with kitchen & staff.
                   </p>
                 </button>
 
-                {/* Mode 2: Personal Chat ("Message Yourself") */}
+                {/* Mode 4: Custom Phone Number */}
                 <button
                   type="button"
-                  onClick={() => setTargetType('self')}
+                  onClick={() => setTargetType('custom')}
                   className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-                    targetType === 'self'
+                    targetType === 'custom'
                       ? 'bg-amber-500/10 border-amber-500 text-white shadow-lg'
                       : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
                   }`}
                 >
                   <div className="flex items-center space-x-2 mb-1.5">
                     <User className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm font-bold text-white">Message to Myself</span>
+                    <span className="text-sm font-bold text-white">Custom Number</span>
                   </div>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Sends to your private "You / Notes to self" chat. May not trigger loud ringtone.
+                    Deliver orders to any other specific WhatsApp phone number.
                   </p>
                 </button>
               </div>
+
+              {/* Custom Phone Input (when Custom mode selected) */}
+              {targetType === 'custom' && (
+                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
+                  <label className="text-xs font-semibold text-slate-300">
+                    Custom Recipient Phone Number:
+                  </label>
+                  <input
+                    type="tel"
+                    value={customPhone}
+                    onChange={(e) => setCustomPhone(e.target.value)}
+                    placeholder="e.g. 919876543210 (with country code)"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              )}
 
               {/* Group Dropdown (when Group mode selected) */}
               {targetType === 'group' && (

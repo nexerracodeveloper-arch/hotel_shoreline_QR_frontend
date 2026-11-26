@@ -20,6 +20,13 @@ import {
   ChefHat,
   ChevronRight,
   Sparkles,
+  MessageCircle,
+  QrCode,
+  Smartphone,
+  Send,
+  Save,
+  Check,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, clearAuthToken } from '@/lib/api';
@@ -37,9 +44,31 @@ export default function OrderDeskPage() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const soundRef = useRef(soundEnabled);
 
+  // WhatsApp Linking & 2-Number State
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+  const [waData, setWaData] = useState<any>(null);
+  const [waActionLoading, setWaActionLoading] = useState(false);
+  const [masterAdminPhoneInput, setMasterAdminPhoneInput] = useState('');
+  const [savingAdminPhone, setSavingAdminPhone] = useState(false);
+
   useEffect(() => {
     soundRef.current = soundEnabled;
   }, [soundEnabled]);
+
+  // Fetch WhatsApp status for the Room Order Desk
+  const fetchWaStatus = useCallback(async () => {
+    try {
+      const res: any = await api.admin.getWhatsAppStatus();
+      if (res && res.success) {
+        setWaData(res);
+        if (res.settings?.masterAdminPhone) {
+          setMasterAdminPhoneInput(res.settings.masterAdminPhone);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Play synthesized audio alert when an order arrives from a room
   const playNewOrderChime = useCallback(() => {
@@ -87,6 +116,7 @@ export default function OrderDeskPage() {
 
   useEffect(() => {
     loadOrders();
+    fetchWaStatus();
 
     const socket = getSocket();
     socket.emit('join:admin');
@@ -119,22 +149,99 @@ export default function OrderDeskPage() {
       );
     };
 
+    // Live update when WhatsApp connection status updates
+    const handleWaStatusUpdate = (updated: any) => {
+      setWaData((prev: any) => ({ ...prev, ...updated }));
+      if (updated.settings?.masterAdminPhone) {
+        setMasterAdminPhoneInput(updated.settings.masterAdminPhone);
+      }
+    };
+
     socket.on('order:new', handleNewOrder);
     socket.on('order:updated', handleOrderUpdated);
+    socket.on('whatsapp:status', handleWaStatusUpdate);
 
     // Gentle polling fallback every 8 seconds
     const interval = setInterval(() => {
       loadOrders(false);
-    }, 8000);
+      if (isWhatsAppModalOpen || waData?.status === 'QR_READY' || waData?.status === 'INITIALIZING') {
+        fetchWaStatus();
+      }
+    }, 6000);
 
     return () => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('order:new', handleNewOrder);
       socket.off('order:updated', handleOrderUpdated);
+      socket.off('whatsapp:status', handleWaStatusUpdate);
       clearInterval(interval);
     };
-  }, [playNewOrderChime]);
+  }, [playNewOrderChime, fetchWaStatus, isWhatsAppModalOpen, waData?.status]);
+
+  // WhatsApp Actions
+  const handleConnectWa = async () => {
+    try {
+      setWaActionLoading(true);
+      await api.admin.restartWhatsApp();
+      toast.success('Generated WhatsApp pairing QR code');
+      await fetchWaStatus();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to start WhatsApp');
+    } finally {
+      setWaActionLoading(false);
+    }
+  };
+
+  const handleLogoutWa = async () => {
+    try {
+      setWaActionLoading(true);
+      await api.admin.logoutWhatsApp();
+      toast.info('WhatsApp session disconnected');
+      await fetchWaStatus();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to disconnect session');
+    } finally {
+      setWaActionLoading(false);
+    }
+  };
+
+  const handleSendTestWa = async () => {
+    try {
+      setWaActionLoading(true);
+      const res: any = await api.admin.sendWhatsAppTest();
+      if (res && res.success) {
+        toast.success(`Test alert sent successfully to ${res.target}!`);
+      } else {
+        toast.error(res.error || 'Failed to send test message');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error executing test alert');
+    } finally {
+      setWaActionLoading(false);
+    }
+  };
+
+  const handleSaveAdminPhone = async () => {
+    if (!masterAdminPhoneInput.trim()) {
+      toast.error('Please enter Master Admin WhatsApp phone number');
+      return;
+    }
+    try {
+      setSavingAdminPhone(true);
+      await api.admin.updateWhatsAppSettings({
+        masterAdminPhone: masterAdminPhoneInput,
+        targetType: 'master_admin',
+        enabled: true,
+      });
+      toast.success(`Saved! Alerts will be sent to Master Admin (+${masterAdminPhoneInput})`);
+      await fetchWaStatus();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save Master Admin number');
+    } finally {
+      setSavingAdminPhone(false);
+    }
+  };
 
   // Primary Action: Accept Order
   const handleAcceptOrder = async (orderId: string, roomNumber: string) => {
@@ -273,6 +380,44 @@ export default function OrderDeskPage() {
                 {isSocketConnected ? 'Live Realtime Feed' : 'Connecting...'}
               </span>
             </div>
+
+            {/* WhatsApp 2-Number Connection Status / Pairing Button */}
+            <button
+              onClick={() => {
+                setIsWhatsAppModalOpen(true);
+                fetchWaStatus();
+              }}
+              className={`p-2 sm:px-3 sm:py-1.5 rounded-xl border text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                waData?.status === 'CONNECTED'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20'
+                  : waData?.status === 'QR_READY'
+                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 animate-pulse hover:bg-amber-500/30'
+                  : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:border-slate-600'
+              }`}
+              title="WhatsApp Order Alerts Setup"
+            >
+              {waData?.status === 'CONNECTED' ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline font-mono">
+                    {waData.phoneNumber ? `+${waData.phoneNumber}` : 'WhatsApp Connected'}
+                  </span>
+                </>
+              ) : waData?.status === 'QR_READY' ? (
+                <>
+                  <QrCode className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline font-bold">Connect WhatsApp (QR)</span>
+                  <span className="sm:hidden font-bold">QR</span>
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="hidden sm:inline">Connect WhatsApp</span>
+                  <span className="sm:hidden">WA</span>
+                </>
+              )}
+            </button>
 
             {/* Sound Chime Toggle */}
             <button
@@ -639,6 +784,252 @@ export default function OrderDeskPage() {
           </div>
         )}
       </main>
+
+      {/* ============================================================== */}
+      {/* 2-NUMBER WHATSAPP CONNECTION & ALERT DISPATCHER MODAL           */}
+      {/* ============================================================== */}
+      {isWhatsAppModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl relative my-8">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                  <MessageCircle className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center space-x-2">
+                    <span>WhatsApp Order Dispatcher</span>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      2-Phone Setup
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Connect this Order Desk to send automated alerts directly to the Master Admin.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsWhatsAppModalOpen(false)}
+                className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Architecture Explanation Banner */}
+            <div className="mt-4 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-slate-800/50 to-emerald-500/10 border border-slate-800">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800">
+                  <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-0.5">
+                    Phone 2 (Sender)
+                  </div>
+                  <div className="text-xs font-semibold text-white">Order Desk WhatsApp</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Paired via QR below</div>
+                </div>
+                <div className="flex flex-col items-center justify-center">
+                  <div className="text-[10px] font-bold text-slate-400">Guest Orders</div>
+                  <ArrowRight className="w-4 h-4 text-amber-400 animate-pulse my-0.5" />
+                  <div className="text-[9px] text-emerald-400 font-mono">Auto Dispatch</div>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800">
+                  <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5">
+                    Phone 1 (Receiver)
+                  </div>
+                  <div className="text-xs font-semibold text-white">Master Admin</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Gets loud WhatsApp alerts</div>
+                </div>
+              </div>
+            </div>
+
+            {/* WhatsApp Connection Box for Phone 2 (Order Desk) */}
+            <div className="mt-4 space-y-4">
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <Smartphone className="w-4 h-4 text-slate-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                      Step 1: Order Desk WhatsApp Pairing
+                    </span>
+                  </div>
+                  {waData?.status === 'CONNECTED' ? (
+                    <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>Connected (+{waData.phoneNumber})</span>
+                    </span>
+                  ) : waData?.status === 'QR_READY' ? (
+                    <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                      <span>Ready to Scan</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                      <span>Not Paired</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* State: CONNECTED */}
+                {waData?.status === 'CONNECTED' && (
+                  <div className="space-y-3">
+                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-start space-x-2.5">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-bold">Active Sender Device: +{waData.phoneNumber}</div>
+                        <div className="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
+                          This Order Desk phone is online and ready to automatically dispatch order notifications when guests place orders.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={handleSendTestWa}
+                        disabled={waActionLoading}
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{waActionLoading ? 'Sending...' : 'Send Test Alert to Master Admin'}</span>
+                      </button>
+
+                      <button
+                        onClick={handleLogoutWa}
+                        disabled={waActionLoading}
+                        className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-slate-700 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                        title="Disconnect this WhatsApp session"
+                      >
+                        <span>Disconnect</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* State: QR READY */}
+                {waData?.status === 'QR_READY' && waData?.qrCode && (
+                  <div className="space-y-3 text-center">
+                    <div className="p-3 bg-white rounded-2xl inline-block shadow-lg border border-slate-200">
+                      <img
+                        src={waData.qrCode}
+                        alt="WhatsApp Web QR Code"
+                        className="w-48 h-48 sm:w-52 sm:h-52 object-contain"
+                      />
+                    </div>
+                    <div className="text-xs text-slate-300 space-y-1">
+                      <p className="font-semibold text-white">How to scan with Order Desk phone:</p>
+                      <p className="text-[11px] text-slate-400">
+                        1. Open WhatsApp &gt; Settings or 3 Dots &gt; <strong>Linked Devices</strong>
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        2. Tap <strong>Link a Device</strong> and point camera at the QR code above
+                      </p>
+                    </div>
+                    <div className="pt-1">
+                      <button
+                        onClick={handleConnectWa}
+                        disabled={waActionLoading}
+                        className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold inline-flex items-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${waActionLoading ? 'animate-spin' : ''}`} />
+                        <span>Refresh QR Code</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* State: INITIALIZING */}
+                {waData?.status === 'INITIALIZING' && (
+                  <div className="py-8 text-center space-y-2">
+                    <RefreshCw className="w-6 h-6 text-amber-400 animate-spin mx-auto" />
+                    <p className="text-xs font-semibold text-white">Generating WhatsApp pairing QR code...</p>
+                    <p className="text-[11px] text-slate-400">Please wait 2-3 seconds</p>
+                  </div>
+                )}
+
+                {/* State: DISCONNECTED or null */}
+                {(!waData?.status || waData?.status === 'DISCONNECTED' || waData?.status === 'FAILED') && (
+                  <div className="py-4 text-center space-y-3">
+                    <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+                      Click below to generate a pairing QR code. You will scan it with the Order Desk WhatsApp phone.
+                    </p>
+                    <button
+                      onClick={handleConnectWa}
+                      disabled={waActionLoading}
+                      className="py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs inline-flex items-center space-x-2 transition-all cursor-pointer shadow-lg shadow-amber-500/20 disabled:opacity-50"
+                    >
+                      <QrCode className="w-4 h-4" />
+                      <span>{waActionLoading ? 'Starting...' : 'Connect WhatsApp (Scan QR)'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Step 2: Destination Setup (Master Admin Number 1) */}
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Smartphone className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                      Step 2: Master Admin Phone (Alert Recipient)
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Enter the Master Admin's WhatsApp number. Every room order received by this desk will be instantly dispatched to this number:
+                </p>
+
+                <div className="flex items-center space-x-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="tel"
+                      value={masterAdminPhoneInput}
+                      onChange={(e) => setMasterAdminPhoneInput(e.target.value)}
+                      placeholder="e.g. 9876543210 or 919876543210"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSaveAdminPhone}
+                    disabled={savingAdminPhone}
+                    className="py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{savingAdminPhone ? 'Saving...' : 'Save Recipient'}</span>
+                  </button>
+                </div>
+
+                {waData?.settings?.masterAdminPhone ? (
+                  <div className="text-[11px] text-emerald-400 font-medium flex items-center space-x-1">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Active Target: +{waData.settings.masterAdminPhone}</span>
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-amber-400">
+                    ⚠️ Recipient number not set yet. Enter Master Admin number and click Save.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Bottom Actions */}
+            <div className="mt-5 pt-4 border-t border-slate-800 flex items-center justify-between">
+              <Link
+                href="/admin/whatsapp"
+                className="text-xs text-slate-400 hover:text-amber-400 flex items-center space-x-1 transition-colors"
+              >
+                <span>Master Admin WhatsApp Settings</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+              <button
+                onClick={() => setIsWhatsAppModalOpen(false)}
+                className="py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
