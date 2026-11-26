@@ -116,16 +116,19 @@ body {
   background: #c5a059;
 }
 
-/* Printable Standee Styles */
+/* Printable Standee & Wi-Fi Tent Card Styles */
 @media print {
   body * {
     visibility: hidden;
   }
   .printable-standee-area,
-  .printable-standee-area * {
+  .printable-standee-area *,
+  .printable-wifi-area,
+  .printable-wifi-area * {
     visibility: visible;
   }
-  .printable-standee-area {
+  .printable-standee-area,
+  .printable-wifi-area {
     position: absolute;
     left: 0;
     top: 0;

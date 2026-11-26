@@ -27,6 +27,8 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -56,6 +58,8 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
   const [filterVegOnly, setFilterVegOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showInfoBanner, setShowInfoBanner] = useState(false);
+  const [showWifiModal, setShowWifiModal] = useState(false);
+  const [copiedWifiPassword, setCopiedWifiPassword] = useState(false);
 
   // Cart State
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -360,11 +364,15 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 {showInfoBanner ? <ChevronUp className="w-3 h-3 text-[#b88e44]" /> : <ChevronDown className="w-3 h-3 text-[#b88e44]" />}
               </button>
 
-              <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#faf5ea] border border-[#dfc07b]/30 text-xs text-stone-600">
+              <button
+                onClick={() => setShowWifiModal(true)}
+                className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#faf5ea] border border-[#dfc07b]/40 text-xs text-stone-700 hover:border-[#b88e44] transition-all cursor-pointer shadow-xs"
+                title="View Hotel Wi-Fi Credentials"
+              >
                 <Wifi className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-[11px] font-mono hidden sm:inline">Wi-Fi Connected</span>
-                <span className="text-[11px] font-mono sm:hidden">Online</span>
-              </div>
+                <span className="text-[11px] font-mono hidden sm:inline">Wi-Fi: Shoreline Vista_Guest</span>
+                <span className="text-[11px] font-mono sm:hidden">Wi-Fi</span>
+              </button>
             </div>
           </div>
 
@@ -398,6 +406,49 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                   <div className="text-stone-800 mt-0.5 font-medium">11:00 – 22:45 hrs</div>
                 </div>
               </div>
+
+              {/* Complimentary High-Speed Guest Wi-Fi Banner */}
+              <div className="p-3 rounded-xl bg-gradient-to-r from-[#faf7f0] to-[#f5edd9] border border-[#ebd9b8] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-2 rounded-lg bg-[#b88e44]/15 text-[#8c6527]">
+                    <Wifi className="w-4 h-4 text-[#8c6527]" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-[#8c6527] uppercase tracking-wider">
+                      Complimentary High-Speed Hotel Wi-Fi
+                    </div>
+                    <div className="text-xs font-semibold text-stone-800 mt-0.5">
+                      Network: <span className="font-bold text-stone-900">Shoreline Vista_Guest</span> • Password:{' '}
+                      <code className="bg-white/90 px-1.5 py-0.5 rounded border border-[#dfc07b]/40 font-mono text-[#8c6527] font-bold">
+                        Pass@999
+                      </code>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText('Pass@999');
+                    setCopiedWifiPassword(true);
+                    toast.success('Wi-Fi Password copied: Pass@999');
+                    setTimeout(() => setCopiedWifiPassword(false), 2500);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#8c6527] hover:bg-[#725220] text-white text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all cursor-pointer shrink-0"
+                >
+                  {copiedWifiPassword ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy Password</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
               <p className="text-[10px] text-stone-500 leading-relaxed border-t border-[#ebd9b8]/50 pt-2">
                 <strong className="text-stone-800 font-semibold">Allergens Advisory:</strong> Please inform our service associate if allergic to milk, wheat, peanuts, soya, tree nuts, or mushrooms. Waves Bar strictly complies with international responsible service guidelines.
               </p>
@@ -1242,6 +1293,85 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Hotel Wi-Fi Credentials Modal for Guests */}
+      {showWifiModal && (
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-[#dfc07b]/40 relative animate-in fade-in zoom-in-95 duration-150">
+            <button
+              onClick={() => setShowWifiModal(false)}
+              className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-700 rounded-full hover:bg-stone-100 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-[#faf5ea] border border-[#dfc07b]/40 flex items-center justify-center text-[#8c6527] mb-3">
+              <Wifi className="w-6 h-6 text-[#8c6527]" />
+            </div>
+
+            <div className="text-[10px] font-bold text-[#8c6527] uppercase tracking-widest font-serif">
+              HOTEL SHORELINE VISTA
+            </div>
+            <h3 className="text-xl font-cinzel font-bold text-stone-900 mt-1">
+              Complimentary Wi-Fi
+            </h3>
+            <p className="text-xs text-stone-500 mt-1">
+              High-speed internet access available in your room and hotel premises.
+            </p>
+
+            <div className="my-4 space-y-2.5 text-left">
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200">
+                <div className="text-[10px] font-bold uppercase text-stone-400">
+                  Network (SSID)
+                </div>
+                <div className="text-sm font-bold text-stone-900 mt-0.5">
+                  Shoreline Vista_Guest
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-bold uppercase text-stone-400">
+                    Password
+                  </div>
+                  <div className="text-sm font-bold font-mono text-stone-900 mt-0.5">
+                    Pass@999
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText('Pass@999');
+                    setCopiedWifiPassword(true);
+                    toast.success('Wi-Fi Password copied: Pass@999');
+                    setTimeout(() => setCopiedWifiPassword(false), 2500);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#8c6527] hover:bg-[#725220] text-white text-xs font-semibold flex items-center space-x-1 transition-all cursor-pointer"
+                >
+                  {copiedWifiPassword ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowWifiModal(false)}
+              className="w-full py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs transition-all cursor-pointer"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
