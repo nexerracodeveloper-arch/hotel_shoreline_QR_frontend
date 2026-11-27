@@ -49,7 +49,9 @@ export default function OrderDeskPage() {
   const [waData, setWaData] = useState<any>(null);
   const [waActionLoading, setWaActionLoading] = useState(false);
   const [masterAdminPhoneInput, setMasterAdminPhoneInput] = useState('');
-  const [savingAdminPhone, setSavingAdminPhone] = useState(false);
+  const [receptionPhoneInput, setReceptionPhoneInput] = useState('');
+  const [kitchenPhoneInput, setKitchenPhoneInput] = useState('');
+  const [savingPhoneSettings, setSavingPhoneSettings] = useState(false);
 
   useEffect(() => {
     soundRef.current = soundEnabled;
@@ -61,8 +63,16 @@ export default function OrderDeskPage() {
       const res: any = await api.admin.getWhatsAppStatus();
       if (res && res.success) {
         setWaData(res);
+        if (res.settings?.receptionPhone) {
+          setReceptionPhoneInput(res.settings.receptionPhone);
+        } else if (res.settings?.masterAdminPhone) {
+          setReceptionPhoneInput(res.settings.masterAdminPhone);
+        }
         if (res.settings?.masterAdminPhone) {
           setMasterAdminPhoneInput(res.settings.masterAdminPhone);
+        }
+        if (res.settings?.kitchenPhone) {
+          setKitchenPhoneInput(res.settings.kitchenPhone);
         }
       }
     } catch {
@@ -222,25 +232,51 @@ export default function OrderDeskPage() {
     }
   };
 
-  const handleSaveAdminPhone = async () => {
-    if (!masterAdminPhoneInput.trim()) {
-      toast.error('Please enter Master Admin WhatsApp phone number');
-      return;
-    }
+  const handleSavePhoneSettings = async () => {
     try {
-      setSavingAdminPhone(true);
+      setSavingPhoneSettings(true);
       await api.admin.updateWhatsAppSettings({
-        masterAdminPhone: masterAdminPhoneInput,
+        receptionPhone: receptionPhoneInput.trim(),
+        kitchenPhone: kitchenPhoneInput.trim(),
+        masterAdminPhone: receptionPhoneInput.trim() || undefined,
         targetType: 'master_admin',
         enabled: true,
       });
-      toast.success(`Saved! Alerts will be sent to Master Admin (+${masterAdminPhoneInput})`);
+      toast.success('Saved! Reception (Amenities) and Kitchen (Orders) numbers updated.');
       await fetchWaStatus();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save Master Admin number');
+      toast.error(err.message || 'Failed to save WhatsApp routing numbers');
     } finally {
-      setSavingAdminPhone(false);
+      setSavingPhoneSettings(false);
     }
+  };
+
+  const getKitchenWhatsAppUrl = (order: any) => {
+    const rawPhone = (waData?.settings?.kitchenPhone || kitchenPhoneInput || '').replace(/[^0-9]/g, '');
+    if (!rawPhone) return null;
+    const phone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+    const itemsList = (order.items || [])
+      .map((it: any) => `• *${it.quantity}x* ${it.name || it.menuItem?.name || 'Dish'}${it.notes ? ` (${it.notes})` : ''}`)
+      .join('\n');
+    const subtotal = (order.items || []).reduce(
+      (s: number, it: any) => s + (it.price ? it.price * it.quantity : it.totalPrice || 0),
+      0
+    );
+    const gst = order.gstAmount ?? Math.round(subtotal * 0.05 * 100) / 100;
+    const total = order.totalAmount || Math.round((subtotal + gst) * 100) / 100;
+    const text = `👨‍🍳 *SHORELINE VISTA — KITCHEN FOOD TICKET*
+━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *Order:* #${order.orderNumber}
+🚪 *ROOM:* *Room ${order.roomNumber}*
+⏰ *Time:* ${new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+━━━━━━━━━━━━━━━━━━━━━━━━
+🍴 *ITEMS TO PREPARE:*
+${itemsList}
+${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
+━━━━━━━━━━━━━━━━━━━━━━━━
+💰 *Bill:* Subtotal ₹${subtotal} + 5% GST ₹${gst} = Total ₹${total}
+👉 *Status:* ${order.status.replace(/_/g, ' ')}`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
   };
 
   // Primary Action: Accept Order
@@ -711,17 +747,37 @@ export default function OrderDeskPage() {
                       </div>
                     )}
 
-                    {/* Total Amount */}
-                    <div className="pt-2 border-t border-slate-800 flex items-baseline justify-between">
-                      <span className="text-xs text-slate-400">Total Bill Amount:</span>
-                      <span className="text-base sm:text-lg font-black text-white font-mono">
-                        {formatRupees(order.totalAmount)}
-                      </span>
-                    </div>
+                    {/* Total Amount + GST Breakdown */}
+                    {(() => {
+                      const subtotal = (order.items || []).reduce(
+                        (s: number, it: any) => s + (it.price ? it.price * it.quantity : it.totalPrice || 0),
+                        0
+                      );
+                      const gst = order.gstAmount ?? Math.round(subtotal * 0.05 * 100) / 100;
+                      const grandTotal = order.totalAmount || Math.round((subtotal + gst) * 100) / 100;
+                      return (
+                        <div className="pt-2.5 border-t border-slate-800 space-y-1 text-xs">
+                          <div className="flex items-center justify-between text-slate-400">
+                            <span>Items Subtotal:</span>
+                            <span className="font-mono text-slate-300 font-semibold">{formatRupees(subtotal)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-amber-400/90">
+                            <span>GST (5%):</span>
+                            <span className="font-mono font-semibold">+ {formatRupees(gst)}</span>
+                          </div>
+                          <div className="flex items-baseline justify-between pt-1 border-t border-slate-800/80">
+                            <span className="font-bold text-white uppercase tracking-wider text-[11px]">Total Bill Amount:</span>
+                            <span className="text-base sm:text-lg font-black text-white font-mono">
+                              {formatRupees(grandTotal)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Bottom Actions: Accept / Reject / Progress */}
-                  <div className="p-3 sm:p-4 bg-slate-950/80 border-t border-slate-800">
+                  <div className="p-3 sm:p-4 bg-slate-950/80 border-t border-slate-800 space-y-2">
                     {isPending ? (
                       <div className="grid grid-cols-3 gap-2">
                         {/* Big Prominent Green Accept Button */}
@@ -777,6 +833,32 @@ export default function OrderDeskPage() {
                         Order Completed
                       </div>
                     )}
+
+                    {/* Dedicated 1-Click WhatsApp Kitchen Food Menu Update Link */}
+                    {(() => {
+                      const waUrl = getKitchenWhatsAppUrl(order);
+                      return waUrl ? (
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+                          title="Forward food ticket directly to Kitchen WhatsApp"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>WhatsApp Kitchen ({waData?.settings?.kitchenPhone || kitchenPhoneInput})</span>
+                          <ExternalLink className="w-3 h-3 text-emerald-400/80" />
+                        </a>
+                      ) : (
+                        <button
+                          onClick={() => setIsWhatsAppModalOpen(true)}
+                          className="w-full py-1.5 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-300 border border-slate-800 text-[11px] font-medium flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
+                        >
+                          <MessageCircle className="w-3 h-3 text-amber-400" />
+                          <span>Set Kitchen WhatsApp Link</span>
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -963,51 +1045,77 @@ export default function OrderDeskPage() {
                 )}
               </div>
 
-              {/* Step 2: Destination Setup (Master Admin Number 1) */}
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
+              {/* Step 2: Dedicated Routing Numbers (Reception & Kitchen) */}
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Smartphone className="w-4 h-4 text-amber-400" />
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                      Step 2: Master Admin Phone (Alert Recipient)
+                      Step 2: WhatsApp Routing Destinations
                     </span>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Enter the Master Admin's WhatsApp number. Every room order received by this desk will be instantly dispatched to this number:
-                </p>
-
-                <div className="flex items-center space-x-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="tel"
-                      value={masterAdminPhoneInput}
-                      onChange={(e) => setMasterAdminPhoneInput(e.target.value)}
-                      placeholder="e.g. 9876543210 or 919876543210"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-500"
-                    />
+                {/* Number 1: Reception (Amenities Updates) */}
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-400 flex items-center space-x-1.5">
+                      <span>🛎️ Reception WhatsApp (Amenities Updates)</span>
+                    </span>
+                    {waData?.settings?.receptionPhone || waData?.settings?.masterAdminPhone ? (
+                      <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        Active: +{waData.settings.receptionPhone || waData.settings.masterAdminPhone}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400">Not configured</span>
+                    )}
                   </div>
-                  <button
-                    onClick={handleSaveAdminPhone}
-                    disabled={savingAdminPhone}
-                    className="py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer shrink-0 disabled:opacity-50"
-                  >
-                    <Save className="w-3.5 h-3.5" />
-                    <span>{savingAdminPhone ? 'Saving...' : 'Save Recipient'}</span>
-                  </button>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    All guest room requests (Room Cleaning, Extra Towels, Toiletries, Maintenance, Reception callbacks) are sent to this Reception phone.
+                  </p>
+                  <input
+                    type="tel"
+                    value={receptionPhoneInput}
+                    onChange={(e) => setReceptionPhoneInput(e.target.value)}
+                    placeholder="e.g. 9876543210 or 919876543210"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-500"
+                  />
                 </div>
 
-                {waData?.settings?.masterAdminPhone ? (
-                  <div className="text-[11px] text-emerald-400 font-medium flex items-center space-x-1">
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Active Target: +{waData.settings.masterAdminPhone}</span>
+                {/* Number 2: Kitchen (Food Menu & Orders Updates) */}
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-400 flex items-center space-x-1.5">
+                      <span>👨‍🍳 Kitchen WhatsApp Link (Food Menu & Tickets)</span>
+                    </span>
+                    {waData?.settings?.kitchenPhone ? (
+                      <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        Active: +{waData.settings.kitchenPhone}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400">Not configured</span>
+                    )}
                   </div>
-                ) : (
-                  <div className="text-[11px] text-amber-400">
-                    ⚠️ Recipient number not set yet. Enter Master Admin number and click Save.
-                  </div>
-                )}
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Enables the 1-click "WhatsApp Kitchen" button on each order card to instantly forward food tickets directly to the chef's WhatsApp.
+                  </p>
+                  <input
+                    type="tel"
+                    value={kitchenPhoneInput}
+                    onChange={(e) => setKitchenPhoneInput(e.target.value)}
+                    placeholder="e.g. 9876543210 or 919876543210"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSavePhoneSettings}
+                  disabled={savingPhoneSettings}
+                  className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50 shadow-md shadow-amber-500/20"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{savingPhoneSettings ? 'Saving Settings...' : 'Save Reception & Kitchen WhatsApp Routing'}</span>
+                </button>
               </div>
             </div>
 

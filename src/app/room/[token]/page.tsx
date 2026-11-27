@@ -198,7 +198,10 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
     );
   };
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cartSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cartGst = Math.round(cartSubtotal * 0.05 * 100) / 100; // 5% GST
+  const cartGrandTotal = Math.round((cartSubtotal + cartGst) * 100) / 100;
+  const cartTotal = cartGrandTotal;
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // Submit In-Room Order
@@ -1122,12 +1125,35 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                         </div>
                       )}
 
-                      <div className="border-t border-[#ebd9b8]/60 pt-2.5 flex items-center justify-between text-xs">
-                        <span className="text-stone-500">Total Billed to Room:</span>
-                        <span className="font-bold text-stone-900 text-base font-serif-luxury">
-                          {formatRupees(order.totalAmount)}
-                        </span>
-                      </div>
+                      {(() => {
+                        const itemsSubtotal = (order.items || []).reduce(
+                          (s: number, it: any) => s + (it.totalPrice || (it.price || it.unitPrice || 0) * it.quantity),
+                          0
+                        );
+                        const gst = order.gstAmount ?? Math.round(itemsSubtotal * 0.05 * 100) / 100;
+                        const grand = order.totalAmount || Math.round((itemsSubtotal + gst) * 100) / 100;
+                        return (
+                          <div className="border-t border-[#ebd9b8]/60 pt-2.5 space-y-1.5 text-xs">
+                            <div className="flex items-center justify-between text-stone-600">
+                              <span>Items Subtotal:</span>
+                              <span className="font-semibold text-stone-900">{formatRupees(itemsSubtotal)}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[#8c6527]">
+                              <span className="flex items-center gap-1 font-medium">
+                                <span>GST (5%):</span>
+                                <span className="text-[9px] bg-[#f5ebd6] px-1 py-0.2 rounded border border-[#dfc07b]/40">CGST + SGST</span>
+                              </span>
+                              <span className="font-semibold">+ {formatRupees(gst)}</span>
+                            </div>
+                            <div className="flex items-center justify-between pt-1 border-t border-[#ebd9b8]/40">
+                              <span className="font-bold text-stone-800">Total Billed to Room:</span>
+                              <span className="font-bold text-[#8c6527] text-base font-serif-luxury">
+                                {formatRupees(grand)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}
@@ -1180,8 +1206,15 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
               </div>
               <span className="text-xs sm:text-sm font-cinzel tracking-wider uppercase">View Room Service Order</span>
             </div>
-            <div className="flex items-center space-x-1.5">
-              <span className="text-sm sm:text-base font-serif-luxury font-bold text-[#dfba73]">{formatRupees(cartTotal)}</span>
+            <div className="flex items-center space-x-2">
+              <div className="text-right">
+                <span className="text-sm sm:text-base font-serif-luxury font-bold text-[#dfba73]">
+                  {formatRupees(cartGrandTotal)}
+                </span>
+                <span className="text-[9px] text-amber-200/80 block leading-none">
+                  (incl. 5% GST)
+                </span>
+              </div>
               <ChevronRight className="w-5 h-5 text-[#dfba73]" />
             </div>
           </button>
@@ -1291,18 +1324,34 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
             </div>
 
             {/* Total & Checkout Button */}
-            <div className="pt-3 border-t border-[#ebd9b8] space-y-2.5">
+            <div className="pt-3 border-t border-[#ebd9b8] space-y-2">
               <div className="flex items-center justify-between text-xs sm:text-sm">
-                <span className="text-stone-600">Subtotal</span>
-                <span className="font-serif-luxury font-bold text-stone-900">{formatRupees(cartTotal)}</span>
+                <span className="text-stone-600">Items Subtotal:</span>
+                <span className="font-serif-luxury font-bold text-stone-900">{formatRupees(cartSubtotal)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs sm:text-sm text-[#8c6527]">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium">GST (5%):</span>
+                  <span className="text-[9px] bg-[#f5ebd6] px-1.5 py-0.2 rounded border border-[#dfc07b]/40 font-semibold">
+                    CGST 2.5% + SGST 2.5%
+                  </span>
+                </div>
+                <span className="font-serif-luxury font-bold text-[#8c6527]">+ {formatRupees(cartGst)}</span>
               </div>
               <div className="flex items-center justify-between text-[11px] sm:text-xs text-stone-600">
                 <span>In-Room Delivery</span>
                 <span className="text-emerald-700 font-semibold">Complimentary</span>
               </div>
-              <div className="flex items-center justify-between text-sm sm:text-base font-extrabold text-stone-900 pt-2 border-t border-[#ebd9b8]">
-                <span>Total to Room Folio:</span>
-                <span className="font-serif-luxury font-bold text-stone-900 text-base sm:text-lg">{formatRupees(cartTotal)}</span>
+              <div className="flex items-baseline justify-between text-sm sm:text-base font-extrabold text-stone-900 pt-2 border-t border-[#ebd9b8]">
+                <div>
+                  <div className="text-stone-900">Total to Room Folio:</div>
+                  <div className="text-[10px] text-stone-500 font-normal">
+                    {formatRupees(cartSubtotal)} + 5% GST ({formatRupees(cartGst)})
+                  </div>
+                </div>
+                <span className="font-serif-luxury font-bold text-[#8c6527] text-lg sm:text-xl">
+                  {formatRupees(cartGrandTotal)}
+                </span>
               </div>
 
               <button

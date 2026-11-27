@@ -280,12 +280,32 @@ export default function AdminOrdersPage() {
 
                 {/* Total & Action Pipeline */}
                 <div className="pt-3 border-t border-slate-800 space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">Total Billed to Room:</span>
-                    <span className="text-base font-extrabold text-amber-400">
-                      {formatRupees(order.totalAmount)}
-                    </span>
-                  </div>
+                  {(() => {
+                    const subtotal = (order.items || []).reduce(
+                      (s: number, it: any) => s + (it.price ? it.price * it.quantity : it.totalPrice || 0),
+                      0
+                    );
+                    const gst = order.gstAmount ?? Math.round(subtotal * 0.05 * 100) / 100;
+                    const grandTotal = order.totalAmount || Math.round((subtotal + gst) * 100) / 100;
+                    return (
+                      <div className="space-y-1 text-xs">
+                        <div className="flex items-center justify-between text-slate-400">
+                          <span>Items Subtotal:</span>
+                          <span className="font-mono text-slate-300 font-semibold">{formatRupees(subtotal)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-amber-400/90">
+                          <span>GST (5%):</span>
+                          <span className="font-mono font-semibold">+ {formatRupees(gst)}</span>
+                        </div>
+                        <div className="flex items-baseline justify-between pt-1 border-t border-slate-800/80">
+                          <span className="text-slate-300 font-bold uppercase tracking-wider text-[11px]">Total Billed to Room:</span>
+                          <span className="text-base font-extrabold text-amber-400 font-mono">
+                            {formatRupees(grandTotal)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Action Pipeline Buttons */}
                   <div className="flex items-center space-x-2">
