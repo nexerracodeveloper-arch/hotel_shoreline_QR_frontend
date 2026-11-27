@@ -977,7 +977,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 <span>Instant In-Room Service Desk</span>
               </h2>
               <p className="text-xs text-stone-600 mt-1 font-serif-luxury italic">
-                Select an amenity or service needed for Room {room.roomNumber}. Our housekeeping & front desk team will be dispatched immediately.
+                Select an amenity or service needed for your room. Our housekeeping & front desk team will be dispatched immediately.
               </p>
             </div>
 
@@ -1032,11 +1032,14 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#dfba73] via-[#b88e44] to-[#8c6527] hover:brightness-105 text-white font-bold text-xs sm:text-sm tracking-wide uppercase transition-all shadow-md shadow-amber-900/15 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
               >
                 {submittingAmenity ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Sending Request...</span>
+                  </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Send Request to Room {room.roomNumber}</span>
+                    <span>Send Request</span>
                   </>
                 )}
               </button>
