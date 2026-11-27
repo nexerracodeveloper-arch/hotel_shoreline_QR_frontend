@@ -274,7 +274,7 @@ export default function OrderDeskPage() {
 ${itemsList}
 ${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
 ━━━━━━━━━━━━━━━━━━━━━━━━
-💰 *Bill:* Subtotal ₹${subtotal} + 5% GST ₹${gst} = Total ₹${total}
+💰 *Bill:* Subtotal ₹${subtotal} + GST ₹${gst} = Total ₹${total}
 👉 *Status:* ${order.status.replace(/_/g, ' ')}`;
     return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
   };
@@ -762,7 +762,7 @@ ${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
                             <span className="font-mono text-slate-300 font-semibold">{formatRupees(subtotal)}</span>
                           </div>
                           <div className="flex items-center justify-between text-amber-400/90">
-                            <span>GST (5%):</span>
+                            <span>GST:</span>
                             <span className="font-mono font-semibold">+ {formatRupees(gst)}</span>
                           </div>
                           <div className="flex items-baseline justify-between pt-1 border-t border-slate-800/80">

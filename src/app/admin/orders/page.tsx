@@ -294,7 +294,7 @@ export default function AdminOrdersPage() {
                           <span className="font-mono text-slate-300 font-semibold">{formatRupees(subtotal)}</span>
                         </div>
                         <div className="flex items-center justify-between text-amber-400/90">
-                          <span>GST (5%):</span>
+                          <span>GST:</span>
                           <span className="font-mono font-semibold">+ {formatRupees(gst)}</span>
                         </div>
                         <div className="flex items-baseline justify-between pt-1 border-t border-slate-800/80">

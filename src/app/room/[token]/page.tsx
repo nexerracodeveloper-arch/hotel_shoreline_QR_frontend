@@ -414,7 +414,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                   <span>Official Dining Hours & Guidelines</span>
                 </span>
                 <span className="text-[10px] text-[#8c6527] bg-[#f5ebd6] px-2 py-0.5 rounded-full border border-[#dfc07b]/40 font-semibold">
-                  5% GST Applicable
+                  GST Applicable
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
@@ -1139,10 +1139,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                               <span className="font-semibold text-stone-900">{formatRupees(itemsSubtotal)}</span>
                             </div>
                             <div className="flex items-center justify-between text-[#8c6527]">
-                              <span className="flex items-center gap-1 font-medium">
-                                <span>GST (5%):</span>
-                                <span className="text-[9px] bg-[#f5ebd6] px-1 py-0.2 rounded border border-[#dfc07b]/40">CGST + SGST</span>
-                              </span>
+                              <span className="font-medium">GST:</span>
                               <span className="font-semibold">+ {formatRupees(gst)}</span>
                             </div>
                             <div className="flex items-center justify-between pt-1 border-t border-[#ebd9b8]/40">
@@ -1212,7 +1209,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                   {formatRupees(cartGrandTotal)}
                 </span>
                 <span className="text-[9px] text-amber-200/80 block leading-none">
-                  (incl. 5% GST)
+                  (incl. GST)
                 </span>
               </div>
               <ChevronRight className="w-5 h-5 text-[#dfba73]" />
@@ -1330,12 +1327,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 <span className="font-serif-luxury font-bold text-stone-900">{formatRupees(cartSubtotal)}</span>
               </div>
               <div className="flex items-center justify-between text-xs sm:text-sm text-[#8c6527]">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-medium">GST (5%):</span>
-                  <span className="text-[9px] bg-[#f5ebd6] px-1.5 py-0.2 rounded border border-[#dfc07b]/40 font-semibold">
-                    CGST 2.5% + SGST 2.5%
-                  </span>
-                </div>
+                <span className="font-medium">GST:</span>
                 <span className="font-serif-luxury font-bold text-[#8c6527]">+ {formatRupees(cartGst)}</span>
               </div>
               <div className="flex items-center justify-between text-[11px] sm:text-xs text-stone-600">
@@ -1346,7 +1338,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 <div>
                   <div className="text-stone-900">Total to Room Folio:</div>
                   <div className="text-[10px] text-stone-500 font-normal">
-                    {formatRupees(cartSubtotal)} + 5% GST ({formatRupees(cartGst)})
+                    {formatRupees(cartSubtotal)} + GST ({formatRupees(cartGst)})
                   </div>
                 </div>
                 <span className="font-serif-luxury font-bold text-[#8c6527] text-lg sm:text-xl">
