@@ -43,6 +43,32 @@ interface CartItem {
   notes?: string;
 }
 
+// Helper: Formats floor into elegant ordinal phrase (e.g. "Second Floor Premium", "First Floor Premium")
+function getFloorPremiumLabel(floor: number | string | undefined | null): string {
+  const f = String(floor ?? '').trim();
+  const num = parseInt(f, 10);
+  const ordinals: Record<number, string> = {
+    0: 'Ground Floor Premium',
+    1: 'First Floor Premium',
+    2: 'Second Floor Premium',
+    3: 'Third Floor Premium',
+    4: 'Fourth Floor Premium',
+    5: 'Fifth Floor Premium',
+    6: 'Sixth Floor Premium',
+    7: 'Seventh Floor Premium',
+    8: 'Eighth Floor Premium',
+    9: 'Ninth Floor Premium',
+    10: 'Tenth Floor Premium',
+  };
+  if (!isNaN(num) && ordinals[num]) {
+    return ordinals[num];
+  }
+  if (f.toLowerCase() === 'g' || f.toLowerCase() === 'ground') {
+    return 'Ground Floor Premium';
+  }
+  return f ? `${f} Floor Premium` : 'Premium Room';
+}
+
 export default function GuestRoomPage({ params }: { params: Promise<{ token: string }> }) {
   const resolvedParams = use(params);
   const qrToken = resolvedParams.token;
@@ -327,51 +353,51 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
       {/* ================================================================ */}
       <header className="relative bg-gradient-to-b from-[#fdfbf7] via-[#faf6ee] to-[#f5efe4] border-b border-[#dfc07b]/40 px-3 sm:px-6 pt-5 pb-5 shadow-sm">
         <div className="max-w-6xl mx-auto">
-          {/* Top Brand & Location */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+          {/* Top Brand & Location Header (Optimized for Mobile & Desktop UX) */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center space-x-2.5 min-w-0">
               {/* Official Hotel Shoreline Vista Logo */}
-              <div className="p-1 rounded-2xl bg-gradient-to-br from-[#dfba73] via-[#b88e44] to-[#8c6527] shadow-md shadow-amber-900/10 shrink-0">
+              <div className="p-1 rounded-xl bg-gradient-to-br from-[#dfba73] via-[#b88e44] to-[#8c6527] shadow-sm shrink-0">
                 <img
                   src="/logo.png"
                   alt="Hotel Shoreline Vista"
-                  className="h-12 sm:h-14 w-auto object-contain rounded-xl"
+                  className="h-9 sm:h-12 w-auto object-contain rounded-lg"
                 />
               </div>
-              <div>
-                <h1 className="font-cinzel font-bold text-sm sm:text-lg tracking-wide text-stone-900 uppercase flex items-center gap-1.5">
-                  <span>Hotel Shoreline Vista</span>
+              <div className="min-w-0">
+                <h1 className="font-cinzel font-bold text-xs sm:text-base tracking-wide text-stone-900 uppercase truncate">
+                  Hotel Shoreline Vista
                 </h1>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="font-serif-luxury font-black text-xs sm:text-sm tracking-wider text-[#8c6527] uppercase">
+                  <span className="font-serif-luxury font-black text-xs sm:text-sm tracking-wider text-[#8c6527] uppercase shrink-0">
                     WAVES
                   </span>
-                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#8c6527] bg-[#f5ebd6] px-1.5 py-0.5 rounded border border-[#dfc07b]/40">
-                    Multicuisine Bar and Restaurant
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#8c6527] bg-[#f5ebd6] px-1.5 py-0.5 rounded border border-[#dfc07b]/40 truncate">
+                    Multicuisine Bar & Restaurant
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
               <button
                 onClick={() => setShowInfoBanner(!showInfoBanner)}
-                className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#faf5ea] border border-[#dfc07b]/50 text-xs text-stone-700 hover:text-stone-900 hover:border-[#b88e44] transition-all cursor-pointer shadow-xs"
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-full bg-[#faf5ea] border border-[#dfc07b]/50 text-xs text-stone-700 hover:text-stone-900 hover:border-[#b88e44] transition-all cursor-pointer shadow-xs"
                 title="View Dining Hours & Guest Guidelines"
               >
                 <Info className="w-3.5 h-3.5 text-[#b88e44]" />
-                <span className="text-[11px] font-medium hidden sm:inline">Dining Info</span>
+                <span className="text-[11px] font-semibold hidden sm:inline">Dining Info</span>
                 {showInfoBanner ? <ChevronUp className="w-3 h-3 text-[#b88e44]" /> : <ChevronDown className="w-3 h-3 text-[#b88e44]" />}
               </button>
 
               <button
                 onClick={() => setShowWifiModal(true)}
-                className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#faf5ea] border border-[#dfc07b]/40 text-xs text-stone-700 hover:border-[#b88e44] transition-all cursor-pointer shadow-xs"
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-full bg-[#faf5ea] border border-[#dfc07b]/40 text-xs text-stone-700 hover:border-[#b88e44] transition-all cursor-pointer shadow-xs"
                 title="View Hotel Wi-Fi Credentials"
               >
                 <Wifi className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-[11px] font-mono hidden sm:inline">Wi-Fi: Shoreline Vista_Guest</span>
-                <span className="text-[11px] font-mono sm:hidden">Wi-Fi</span>
+                <span className="text-[11px] font-mono hidden sm:inline">Shoreline Vista_Guest</span>
+                <span className="text-[11px] font-semibold sm:hidden">Wi-Fi</span>
               </button>
             </div>
           </div>
@@ -455,34 +481,32 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
             </div>
           )}
 
-          {/* Room Location Banner */}
-          <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#ffffff] via-[#faf6ed] to-[#f4eee2] border border-[#dfc07b]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+          {/* Room Location Banner (Refined for Mobile UX - Removed 'floor' and 'suite') */}
+          <div className="mt-3.5 sm:mt-4 p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-[#ffffff] via-[#faf6ed] to-[#f4eee2] border border-[#dfc07b]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
             <div>
-              <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest text-[#8c6527]">
-                <span className="bg-[#b88e44]/15 text-[#8c6527] px-2 py-0.5 rounded-full font-black border border-[#b88e44]/30">
-                  PREMIUM ROOM
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-2xl sm:text-3xl font-cinzel font-black text-stone-900 tracking-tight">
+                  ROOM {room.roomNumber}
                 </span>
-                <span>Verified In-Room Dining Location</span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-cinzel font-black text-stone-900 tracking-tight flex items-baseline gap-2 mt-1">
-                <span>ROOM {room.roomNumber}</span>
-                <span className="text-xs font-sans text-stone-600 font-semibold tracking-normal">
-                  (Floor {room.floor})
+                <span className="bg-[#b88e44]/15 text-[#8c6527] px-2.5 py-0.5 rounded-full text-xs font-bold border border-[#b88e44]/30 flex items-center gap-1 shadow-2xs">
+                  <Sparkles className="w-3 h-3 text-[#b88e44]" />
+                  <span>{getFloorPremiumLabel(room.floor)}</span>
                 </span>
               </div>
-              <div className="text-xs text-stone-600 mt-0.5">
-                Premium Room Suite • In-Room QR Service Active
+              <div className="text-[11px] sm:text-xs text-stone-600 mt-1 font-medium flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Verified In-Room Dining • Freshly Prepared & Delivered</span>
               </div>
             </div>
 
-            <div className="sm:text-right">
+            <div className="sm:text-right shrink-0">
               {activeGuest ? (
-                <div>
-                  <div className="text-[11px] text-stone-500">Welcome,</div>
+                <div className="bg-white/80 px-3 py-1.5 rounded-xl border border-[#dfc07b]/30">
+                  <div className="text-[10px] text-stone-500 uppercase tracking-wider font-medium">Welcome,</div>
                   <div className="text-sm font-bold text-stone-900">{activeGuest.guestName}</div>
                 </div>
               ) : (
-                <div className="text-xs text-emerald-700 font-semibold flex items-center sm:justify-end space-x-1">
+                <div className="text-xs text-emerald-700 font-semibold flex items-center sm:justify-end space-x-1.5 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Direct Room Billing Active</span>
                 </div>

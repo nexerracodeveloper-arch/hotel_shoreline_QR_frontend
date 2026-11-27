@@ -22,6 +22,8 @@ import {
   Wifi,
   Copy,
   Check,
+  UtensilsCrossed,
+  Utensils,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -30,6 +32,32 @@ import { formatRupees } from '@/lib/currency';
 const WIFI_SSID = 'Shoreline Vista_Guest';
 const WIFI_PASSWORD = 'Pass@999';
 const WIFI_QR_STRING = `WIFI:S:${WIFI_SSID};T:WPA;P:${WIFI_PASSWORD};;`;
+
+// Helper: Converts floor number into elegant Title Case ordinal without the words 'floor' or 'suite'
+function getFloorPremiumLabel(floor: number | string | undefined | null): string {
+  const f = String(floor ?? '').trim();
+  const num = parseInt(f, 10);
+  const ordinals: Record<number, string> = {
+    0: 'Ground Floor Premium',
+    1: 'First Floor Premium',
+    2: 'Second Floor Premium',
+    3: 'Third Floor Premium',
+    4: 'Fourth Floor Premium',
+    5: 'Fifth Floor Premium',
+    6: 'Sixth Floor Premium',
+    7: 'Seventh Floor Premium',
+    8: 'Eighth Floor Premium',
+    9: 'Ninth Floor Premium',
+    10: 'Tenth Floor Premium',
+  };
+  if (!isNaN(num) && ordinals[num]) {
+    return ordinals[num];
+  }
+  if (f.toLowerCase() === 'g' || f.toLowerCase() === 'ground') {
+    return 'Ground Floor Premium';
+  }
+  return f ? `${f} Floor Premium` : 'Premium Room';
+}
 
 export default function AdminRoomsPage() {
   const [rooms, setRooms] = useState<any[]>([]);
@@ -157,40 +185,28 @@ export default function AdminRoomsPage() {
     toast.success('Downloaded Wi-Fi Connection QR code');
   };
 
-  // Download Full In-Room Dining Standee Card on Canvas
+  // Download Full In-Room Dining Standee Card on Canvas (Matching User's Reference)
   const handleDownloadStandeeCard = () => {
     if (!qrDataUrl || !selectedRoom) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 800;
-    canvas.height = 1100;
+    canvas.width = 850;
+    canvas.height = 1250;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Draw background
-    ctx.fillStyle = '#ffffff';
+    // Soft Luxury Cream/White Background
+    ctx.fillStyle = '#faf8f5';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Border
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth = 12;
-    ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+    // Elegant Outer Gold Border & Inset
+    ctx.strokeStyle = '#dfba73';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
 
-    // Hotel Name Header
-    ctx.fillStyle = '#64748b';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('HOTEL SHORELINE VISTA', 400, 80);
-
-    // Waves Logo Bold Text
-    ctx.fillStyle = '#8c6527';
-    ctx.font = 'bold 34px serif';
-    ctx.fillText('WAVES', 400, 120);
-
-    // Subtitle
-    ctx.fillStyle = '#b45309';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.fillText('MULTICUISINE BAR AND RESTAURANT', 400, 150);
+    ctx.strokeStyle = '#ebd9b8';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(28, 28, canvas.width - 56, canvas.height - 56);
 
     // Load Food Banner & QR Image
     const foodImg = new Image();
@@ -200,73 +216,244 @@ export default function AdminRoomsPage() {
     const onBothLoaded = () => {
       imagesLoaded++;
       if (imagesLoaded === 2) {
-        // Draw Food Banner with rounded corners
+        // 1. Top Food Banner with rounded corners
         ctx.save();
         ctx.beginPath();
-        ctx.roundRect(100, 175, 600, 190, [16]);
+        ctx.roundRect(50, 45, 750, 260, [20]);
         ctx.clip();
         try {
-          ctx.drawImage(foodImg, 100, 175, 600, 190);
+          ctx.drawImage(foodImg, 50, 45, 750, 260);
         } catch {
-          // Fallback if image draw fails
+          // Fallback
         }
+
+        // Left Dark Gradient Overlay for 'Restaurant' text
+        const grad = ctx.createLinearGradient(50, 45, 450, 45);
+        grad.addColorStop(0, 'rgba(15, 23, 42, 0.92)');
+        grad.addColorStop(0.65, 'rgba(15, 23, 42, 0.55)');
+        grad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(50, 45, 500, 260);
+
+        // Cloche / Dome line icon
+        ctx.strokeStyle = '#fef08a';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(130, 115, 22, Math.PI, 0, false);
+        ctx.lineTo(160, 115);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(130, 90, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#fef08a';
+        ctx.fill();
+
+        // Cursive 'Restaurant' script
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'italic bold 56px serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('Restaurant', 85, 185);
+
+        // DINE • RELAX • ENJOY
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText('DINE  •  RELAX  •  ENJOY', 90, 225);
         ctx.restore();
 
-        // Room Number Box with Premium Room badge
-        ctx.fillStyle = '#0f172a';
+        // Golden border around the banner
+        ctx.strokeStyle = '#dfba73';
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.roundRect(240, 385, 320, 85, [16]);
-        ctx.fill();
+        ctx.roundRect(50, 45, 750, 260, [20]);
+        ctx.stroke();
 
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = 'bold 13px sans-serif';
+        // 2. Room Number Box with Premium Room badge
+        ctx.fillStyle = '#0e1a2f';
+        ctx.beginPath();
+        ctx.roundRect(245, 330, 360, 95, [20]);
+        ctx.fill();
+        ctx.strokeStyle = '#dfba73';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#dfba73';
+        ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('PREMIUM ROOM', 400, 412);
+        ctx.fillText('PREMIUM ROOM', 425, 362);
 
-        ctx.fillStyle = '#f8fafc';
-        ctx.font = 'bold 34px sans-serif';
-        ctx.fillText(`ROOM ${selectedRoom.roomNumber}`, 400, 452);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 42px sans-serif';
+        ctx.fillText(`ROOM ${selectedRoom.roomNumber}`, 425, 407);
 
-        // Floor and Type
-        ctx.fillStyle = '#64748b';
-        ctx.font = '16px sans-serif';
-        ctx.fillText(`Floor ${selectedRoom.floor} • Premium Suite`, 400, 495);
-
-        // Instructions
-        ctx.fillStyle = '#334155';
-        ctx.font = 'bold 18px sans-serif';
-        ctx.fillText('Scan with your phone camera', 400, 528);
-
-        ctx.fillStyle = '#64748b';
-        ctx.font = '15px sans-serif';
-        ctx.fillText('to view the menu & order in-room food & drinks', 400, 552);
-
-        // Draw QR Image
-        ctx.drawImage(qrImg, 260, 580, 280, 280);
-
-        // Wi-Fi Footer Box (Updated with Real Credentials)
-        ctx.fillStyle = '#f8fafc';
+        // 3. Floor Title Line: e.g. "Second Floor Premium" (without floor or suite words)
+        ctx.strokeStyle = '#dfba73';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.roundRect(150, 890, 500, 90, [12]);
-        ctx.fill();
+        ctx.moveTo(100, 455);
+        ctx.lineTo(260, 455);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(590, 455);
+        ctx.lineTo(750, 455);
+        ctx.stroke();
+
+        ctx.fillStyle = '#8c6527';
+        ctx.font = 'bold 18px serif';
+        ctx.fillText(getFloorPremiumLabel(selectedRoom.floor).toUpperCase(), 425, 462);
+
+        // 4. Two Feature Badges: Restaurant & Room Service
+        // Left: Restaurant circle & text
         ctx.strokeStyle = '#cbd5e1';
         ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(175, 520, 26, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 22px serif';
+        ctx.fillText('🍽️', 175, 528);
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('Restaurant', 215, 515);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '13px sans-serif';
+        ctx.fillText('Multi-cuisine Delights', 215, 535);
+
+        // Center vertical divider
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(425, 495);
+        ctx.lineTo(425, 545);
+        ctx.stroke();
+
+        // Right: Room Service circle & text
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.beginPath();
+        ctx.arc(480, 520, 26, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 20px serif';
+        ctx.fillText('🛏️', 480, 527);
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('Room Service', 520, 515);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '13px sans-serif';
+        ctx.fillText('Enjoy Comfort, In-Room', 520, 535);
+
+        // 5. Scan Prompt
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.fillText('Scan with your phone camera', 425, 590);
+
+        ctx.fillStyle = '#475569';
+        ctx.font = '15px sans-serif';
+        ctx.fillText('to view the menu & order in-room food & drinks', 425, 615);
+
+        // 6. QR Code with Left & Right Radiating Gold Rays
+        ctx.drawImage(qrImg, 280, 645, 290, 290);
+
+        // Left Rays \ | /
+        ctx.strokeStyle = '#dfba73';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(210, 785);
+        ctx.lineTo(245, 780);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(205, 805);
+        ctx.lineTo(248, 805);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(210, 825);
+        ctx.lineTo(245, 830);
+        ctx.stroke();
+
+        // Right Rays / | \
+        ctx.beginPath();
+        ctx.moveTo(640, 785);
+        ctx.lineTo(605, 780);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(645, 805);
+        ctx.lineTo(602, 805);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(640, 825);
+        ctx.lineTo(605, 830);
+        ctx.stroke();
+
+        // 7. Wi-Fi Box
+        ctx.fillStyle = '#fffdfa';
+        ctx.beginPath();
+        ctx.roundRect(125, 965, 600, 90, [16]);
+        ctx.fill();
+        ctx.strokeStyle = '#dfba73';
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
         ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('Complimentary High-Speed Wi-Fi', 400, 925);
+        ctx.font = 'bold 26px sans-serif';
+        ctx.fillText('📶', 175, 1022);
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('Complimentary High-Speed Wi-Fi', 215, 1005);
+
+        ctx.fillStyle = '#475569';
+        ctx.font = '15px sans-serif';
+        ctx.fillText('Network: Shoreline Vista_Guest   •   Password: Pass@999', 215, 1032);
+
+        // 8. Footer Line
+        ctx.strokeStyle = '#dfba73';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(90, 1095);
+        ctx.lineTo(160, 1095);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(690, 1095);
+        ctx.lineTo(760, 1095);
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
         ctx.fillStyle = '#64748b';
         ctx.font = '14px sans-serif';
-        ctx.fillText('Network: Shoreline Vista_Guest  •  Password: Pass@999', 400, 955);
+        ctx.fillText('Hotel Shoreline Vista  •  Freshly Prepared & Delivered to Your Room', 425, 1100);
 
-        // Footer
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '13px sans-serif';
-        ctx.fillText('Hotel Shoreline Vista • Freshly Prepared & Delivered to Your Room', 400, 1030);
+        // 9. Bottom Waves Accent
+        ctx.fillStyle = '#0e1a2f';
+        ctx.beginPath();
+        ctx.roundRect(40, 1140, 770, 70, [0, 0, 16, 16]);
+        ctx.fill();
+
+        ctx.strokeStyle = '#dfba73';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(40, 1140);
+        ctx.lineTo(810, 1140);
+        ctx.stroke();
+
+        ctx.fillStyle = '#dfba73';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText('WAVES MULTICUISINE RESTAURANT & BAR  •  SHORELINE VISTA', 425, 1180);
 
         const link = document.createElement('a');
-        link.download = `Room_${selectedRoom.roomNumber}_Dining_Standee_Card.png`;
+        link.download = `Room_${selectedRoom.roomNumber}_Standee_Card.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
         toast.success(`Generated Standee Card for Room ${selectedRoom.roomNumber}`);
@@ -438,7 +625,7 @@ export default function AdminRoomsPage() {
 
     ctx.fillStyle = '#f59e0b';
     ctx.font = 'bold 12px sans-serif';
-    ctx.fillText('PREMIUM ROOM SUITE', 450, 202);
+    ctx.fillText(getFloorPremiumLabel(selectedRoom.floor).toUpperCase(), 450, 202);
 
     ctx.fillStyle = '#f8fafc';
     ctx.font = 'bold 32px sans-serif';
@@ -703,8 +890,8 @@ export default function AdminRoomsPage() {
                       <span className="text-xl font-black text-white tracking-tight">
                         Room {room.roomNumber}
                       </span>
-                      <span className="text-xs text-slate-400 font-medium">
-                        Floor {room.floor}
+                      <span className="text-xs text-amber-400/90 font-medium bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
+                        {getFloorPremiumLabel(room.floor)}
                       </span>
                     </div>
 
@@ -828,92 +1015,141 @@ export default function AdminRoomsPage() {
               </button>
             </div>
 
-            {/* TAB 1: IN-ROOM DINING CARD */}
+            {/* TAB 1: IN-ROOM DINING CARD (MATCHING USER REFERENCE DESIGN) */}
             {standeeTab === 'dining' && (
               <div
                 ref={printRef}
-                className="printable-standee-area bg-white text-slate-900 p-4 sm:p-6 rounded-2xl border-2 border-slate-200 text-center shadow-lg mx-auto w-full max-w-sm animate-in fade-in duration-150"
+                className="printable-standee-area bg-gradient-to-b from-[#faf8f5] via-white to-[#f7f3eb] text-slate-900 p-4 sm:p-5 rounded-3xl border-2 border-[#dfba73]/50 text-center shadow-xl mx-auto w-full max-w-sm relative overflow-hidden animate-in fade-in duration-150"
               >
-                <img
-                  src="/logo.png"
-                  alt="Hotel Shoreline Vista"
-                  className="h-14 mx-auto mb-1 object-contain rounded-xl shadow-xs"
-                />
-                <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">
-                  HOTEL SHORELINE VISTA
-                </div>
-
-                {/* Bold Waves Logo Text & Emblem */}
-                <div className="flex items-center justify-center gap-1.5 my-1">
-                  <img
-                    src="/waves-logo-tight.png"
-                    alt="Waves"
-                    className="h-5 object-contain"
-                  />
-                  <span className="text-xl sm:text-2xl font-black tracking-widest text-[#8c6527] font-serif uppercase">
-                    WAVES
-                  </span>
-                </div>
-                <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">
-                  Multicuisine Bar and Restaurant
-                </div>
-
-                {/* Food Image Banner */}
-                <div className="my-2.5 overflow-hidden rounded-xl border border-amber-200/80 shadow-xs relative">
+                {/* 1. Top Food & Delicacies Banner with Script Restaurant Overlay */}
+                <div className="relative rounded-2xl overflow-hidden border border-[#dfba73]/80 shadow-md">
                   <img
                     src="/food-banner.jpg"
-                    alt="Waves Multicuisine Delicacies"
-                    className="w-full h-24 sm:h-28 object-cover"
+                    alt="Waves Restaurant & Bar"
+                    className="w-full h-32 sm:h-36 object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-transparent to-transparent flex items-end p-2">
-                    <span className="text-[9px] font-semibold text-white/95 tracking-wide drop-shadow">
-                      Fresh Gourmet Delights • Coastal & Global Flavors
-                    </span>
+                  {/* Left dark luxury gradient overlay for 'Restaurant' text */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-stone-950/90 via-stone-950/45 to-transparent flex flex-col justify-center px-4 text-left">
+                    <div className="flex items-center space-x-1.5 text-amber-300 mb-0.5">
+                      <Utensils className="w-3.5 h-3.5 text-amber-300" />
+                      <span className="text-[9px] font-serif uppercase tracking-widest text-amber-200">
+                        Waves
+                      </span>
+                    </div>
+                    <div className="font-serif italic font-bold text-3xl sm:text-4xl text-white tracking-tight drop-shadow-md">
+                      Restaurant
+                    </div>
+                    <div className="text-[9px] font-bold tracking-widest text-white/95 uppercase mt-1 drop-shadow">
+                      DINE  •  RELAX  •  ENJOY
+                    </div>
                   </div>
                 </div>
 
-                {/* Room Number Box with Premium Room Badge */}
-                <div className="my-2 py-1.5 px-6 bg-slate-950 text-white rounded-xl inline-block shadow-sm">
-                  <div className="text-[9px] uppercase tracking-widest font-black text-amber-400">
+                {/* 2. Room Number Box with Premium Room Badge */}
+                <div className="mt-3.5 mb-2 py-2 px-6 bg-[#0e1a2f] border border-[#dfba73]/70 text-white rounded-2xl inline-block shadow-md">
+                  <div className="text-[10px] uppercase tracking-widest font-black text-[#dfba73]">
                     PREMIUM ROOM
                   </div>
-                  <span className="text-2xl font-black tracking-tight">
+                  <div className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-0.5">
                     ROOM {selectedRoom.roomNumber}
+                  </div>
+                </div>
+
+                {/* 3. Floor Title Line: e.g. "Second Floor Premium" (without floor or suite words) */}
+                <div className="flex items-center justify-center space-x-3 my-1.5 px-3">
+                  <div className="h-px bg-gradient-to-r from-transparent via-[#dfba73] to-[#dfba73] flex-1" />
+                  <span className="text-xs sm:text-sm font-bold text-[#8c6527] font-serif tracking-wider uppercase">
+                    {getFloorPremiumLabel(selectedRoom.floor)}
                   </span>
+                  <div className="h-px bg-gradient-to-l from-transparent via-[#dfba73] to-[#dfba73] flex-1" />
                 </div>
 
-                <div className="text-xs text-slate-600 mb-2.5 font-medium">
-                  Scan with your phone camera to browse the menu & order in-room food & drinks.
-                </div>
-
-                {/* QR Image Box */}
-                <div className="p-2 bg-slate-50 border border-slate-200 rounded-xl inline-block">
-                  {qrDataUrl ? (
-                    <img
-                      src={qrDataUrl}
-                      alt={`Room ${selectedRoom.roomNumber} QR`}
-                      className="w-36 sm:w-44 h-36 sm:h-44 mx-auto"
-                    />
-                  ) : (
-                    <div className="w-36 sm:w-44 h-36 sm:h-44 flex items-center justify-center text-xs text-slate-400">
-                      Generating QR...
+                {/* 4. Two Feature Badges: Restaurant & Room Service */}
+                <div className="grid grid-cols-2 gap-2 my-2 py-2 border-y border-[#ebd9b8]/60 text-left">
+                  <div className="flex items-center space-x-2 pl-2">
+                    <div className="w-8 h-8 rounded-full border border-stone-300 flex items-center justify-center shrink-0 bg-stone-50">
+                      <UtensilsCrossed className="w-4 h-4 text-stone-800" />
                     </div>
-                  )}
+                    <div className="leading-tight">
+                      <div className="text-xs font-bold text-stone-900">Restaurant</div>
+                      <div className="text-[9px] text-stone-500">Multi-cuisine Delights</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 pl-2 border-l border-stone-200">
+                    <div className="w-8 h-8 rounded-full border border-stone-300 flex items-center justify-center shrink-0 bg-stone-50">
+                      <BedDouble className="w-4 h-4 text-stone-800" />
+                    </div>
+                    <div className="leading-tight">
+                      <div className="text-xs font-bold text-stone-900">Room Service</div>
+                      <div className="text-[9px] text-stone-500">Enjoy Comfort, In-Room</div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Updated Wi-Fi Details */}
-                <div className="mt-2.5 p-2 bg-slate-100 rounded-lg text-[11px] text-slate-700 border border-slate-200">
-                  <div className="flex items-center justify-center space-x-1 font-bold text-slate-900 mb-0.5">
-                    <Wifi className="w-3.5 h-3.5 text-amber-700" />
-                    <span>Complimentary Guest Wi-Fi</span>
+                {/* 5. Scan Prompt */}
+                <div className="my-1.5">
+                  <div className="text-xs sm:text-sm font-bold text-stone-900">
+                    Scan with your phone camera
                   </div>
+                  <div className="text-[11px] text-stone-500">
+                    to view the menu & order in-room food & drinks
+                  </div>
+                </div>
+
+                {/* 6. QR Code with Left & Right Radiating Gold Rays */}
+                <div className="flex items-center justify-center space-x-2.5 my-2">
+                  {/* Left rays */}
+                  <div className="text-[#dfba73] font-bold select-none text-base tracking-widest leading-none transform -rotate-12">
+                    \ | /
+                  </div>
+
+                  <div className="p-2 bg-white rounded-2xl border border-stone-200 shadow-sm inline-block">
+                    {qrDataUrl ? (
+                      <img
+                        src={qrDataUrl}
+                        alt={`Room ${selectedRoom.roomNumber} QR`}
+                        className="w-36 sm:w-44 h-36 sm:h-44 mx-auto"
+                      />
+                    ) : (
+                      <div className="w-36 sm:w-44 h-36 sm:h-44 flex items-center justify-center text-xs text-stone-400">
+                        Generating QR...
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right rays */}
+                  <div className="text-[#dfba73] font-bold select-none text-base tracking-widest leading-none transform rotate-12">
+                    \ | /
+                  </div>
+                </div>
+
+                {/* 7. Wi-Fi Box */}
+                <div className="mt-2 p-2.5 bg-[#fffdfa] rounded-xl text-[11px] text-stone-700 border border-[#dfba73]/60 flex items-center space-x-2 text-left shadow-xs">
+                  <Wifi className="w-5 h-5 text-stone-900 shrink-0" />
                   <div>
-                    <strong>Network:</strong> Shoreline Vista_Guest • <strong>Password:</strong> Pass@999
+                    <div className="font-bold text-stone-900 text-[11px]">
+                      Complimentary High-Speed Wi-Fi
+                    </div>
+                    <div className="text-[10px] text-stone-600">
+                      Network: <span className="font-bold">Shoreline Vista_Guest</span> • Password: <span className="font-bold font-mono">Pass@999</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-1.5 text-[10px] text-slate-400 font-medium">
-                  No app download required • Instant Room Service
+                {/* 8. Footer Line */}
+                <div className="flex items-center justify-center space-x-2 my-2 text-[9px] text-stone-500 font-medium">
+                  <div className="h-px bg-[#dfba73]/50 w-6" />
+                  <span>Hotel Shoreline Vista • Freshly Prepared & Delivered to Your Room</span>
+                  <div className="h-px bg-[#dfba73]/50 w-6" />
+                </div>
+
+                {/* 9. Bottom Ocean Waves Decorative Curves */}
+                <div className="-mx-5 -mb-5 mt-2 h-7 bg-gradient-to-r from-[#0d1e38] via-[#1a3860] to-[#0d1e38] rounded-b-2xl relative overflow-hidden flex items-center justify-center">
+                  <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#dfba73] to-transparent" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#dfba73]/90 font-serif">
+                    Shoreline Vista • Waves
+                  </span>
                 </div>
               </div>
             )}
@@ -1010,7 +1246,9 @@ export default function AdminRoomsPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[9px] font-bold text-amber-600 uppercase">PREMIUM ROOM</div>
+                    <div className="text-[9px] font-bold text-amber-600 uppercase">
+                      {getFloorPremiumLabel(selectedRoom.floor)}
+                    </div>
                     <div className="text-base font-black text-slate-950">ROOM {selectedRoom.roomNumber}</div>
                   </div>
                 </div>
