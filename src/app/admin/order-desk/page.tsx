@@ -19,6 +19,8 @@ import {
   Layers,
   ChefHat,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Sparkles,
   MessageCircle,
   QrCode,
@@ -27,7 +29,9 @@ import {
   Save,
   Check,
   ExternalLink,
+  Bell,
 } from 'lucide-react';
+import QRCode from 'qrcode';
 import { toast } from 'sonner';
 import { api, clearAuthToken } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
@@ -52,6 +56,46 @@ export default function OrderDeskPage() {
   const [receptionPhoneInput, setReceptionPhoneInput] = useState('');
   const [kitchenPhoneInput, setKitchenPhoneInput] = useState('');
   const [savingPhoneSettings, setSavingPhoneSettings] = useState(false);
+
+  // 2 QR Codes & Channels State
+  const [receptionQrUrl, setReceptionQrUrl] = useState<string | null>(null);
+  const [kitchenQrUrl, setKitchenQrUrl] = useState<string | null>(null);
+  const [isQrStationCollapsed, setIsQrStationCollapsed] = useState(false);
+  const [testingReception, setTestingReception] = useState(false);
+  const [testingKitchen, setTestingKitchen] = useState(false);
+
+  // Generate 2 QR Codes dynamically using sender phone number
+  useEffect(() => {
+    const rawSender = waData?.phoneNumber || '';
+    const cleanSender = rawSender.replace(/[^0-9]/g, '');
+    const sender =
+      cleanSender ||
+      (waData?.settings?.masterAdminPhone || '').replace(/[^0-9]/g, '') ||
+      '919876543210';
+
+    const receptionText = encodeURIComponent(
+      'RECEPTION: Register this WhatsApp number to receive Amenities & Housekeeping requests for Hotel Shoreline Vista'
+    );
+    const kitchenText = encodeURIComponent(
+      'KITCHEN: Register this WhatsApp number to receive Food & Beverage order tickets for Hotel Shoreline Vista'
+    );
+
+    QRCode.toDataURL(`https://wa.me/${sender}?text=${receptionText}`, {
+      width: 260,
+      margin: 1,
+      color: { dark: '#0c0a09', light: '#ffffff' },
+    })
+      .then(setReceptionQrUrl)
+      .catch((e) => console.warn('Reception QR gen error:', e));
+
+    QRCode.toDataURL(`https://wa.me/${sender}?text=${kitchenText}`, {
+      width: 260,
+      margin: 1,
+      color: { dark: '#0c0a09', light: '#ffffff' },
+    })
+      .then(setKitchenQrUrl)
+      .catch((e) => console.warn('Kitchen QR gen error:', e));
+  }, [waData?.phoneNumber, waData?.settings?.masterAdminPhone]);
 
   useEffect(() => {
     soundRef.current = soundEnabled;
@@ -232,17 +276,61 @@ export default function OrderDeskPage() {
     }
   };
 
-  const handleSavePhoneSettings = async () => {
+  const handleTestReceptionAlert = async () => {
+    try {
+      setTestingReception(true);
+      const res: any = await api.admin.sendWhatsAppTestReception();
+      if (res && res.success) {
+        toast.success(`🛎️ Test Amenities alert sent to Reception: ${res.target}!`);
+      } else {
+        toast.error(res?.error || 'Failed to send test alert to Reception');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error executing test Reception alert');
+    } finally {
+      setTestingReception(false);
+    }
+  };
+
+  const handleTestKitchenAlert = async () => {
+    try {
+      setTestingKitchen(true);
+      const res: any = await api.admin.sendWhatsAppTestKitchen();
+      if (res && res.success) {
+        toast.success(`👨‍🍳 Test Food Order ticket sent to Kitchen: ${res.target}!`);
+      } else {
+        toast.error(res?.error || 'Failed to send test alert to Kitchen');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error executing test Kitchen alert');
+    } finally {
+      setTestingKitchen(false);
+    }
+  };
+
+  const handleSavePhoneSettings = async (target?: 'reception' | 'kitchen' | 'both') => {
     try {
       setSavingPhoneSettings(true);
-      await api.admin.updateWhatsAppSettings({
-        receptionPhone: receptionPhoneInput.trim(),
-        kitchenPhone: kitchenPhoneInput.trim(),
-        masterAdminPhone: receptionPhoneInput.trim() || undefined,
-        targetType: 'master_admin',
+      const payload: any = {
         enabled: true,
-      });
-      toast.success('Saved! Reception (Amenities) and Kitchen (Orders) numbers updated.');
+        targetType: 'master_admin',
+      };
+      if (!target || target === 'both' || target === 'reception') {
+        payload.receptionPhone = receptionPhoneInput.trim();
+        payload.masterAdminPhone = receptionPhoneInput.trim() || undefined;
+      }
+      if (!target || target === 'both' || target === 'kitchen') {
+        payload.kitchenPhone = kitchenPhoneInput.trim();
+        payload.orderDeskPhone = kitchenPhoneInput.trim() || undefined;
+      }
+      await api.admin.updateWhatsAppSettings(payload);
+      toast.success(
+        target === 'reception'
+          ? 'Saved Reception (Amenities) WhatsApp number!'
+          : target === 'kitchen'
+          ? 'Saved Kitchen (Orders) WhatsApp number!'
+          : 'Saved Reception & Kitchen WhatsApp numbers!'
+      );
       await fetchWaStatus();
     } catch (err: any) {
       toast.error(err.message || 'Failed to save WhatsApp routing numbers');
@@ -581,7 +669,216 @@ ${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
       {/* ============================================================== */}
       {/* MAIN ORDERS STREAM                                             */}
       {/* ============================================================== */}
-      <main className="max-w-7xl mx-auto w-full p-3 sm:p-6 flex-1">
+      <main className="max-w-7xl mx-auto w-full p-3 sm:p-6 flex-1 space-y-6">
+        {/* ============================================================== */}
+        {/* 2 WHATSAPP QR CHANNELS: 1 FOR AMENITIES & 1 FOR FOOD ORDERS    */}
+        {/* ============================================================== */}
+        <section className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500/20 to-emerald-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
+                <QrCode className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h2 className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
+                    2 WhatsApp Alert Channels
+                  </h2>
+                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Single Sender • 2 Recipients
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Automated alerts originate from the hotel sender number and route to 2 separate staff numbers: Amenities to Reception, Food Orders to Kitchen.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 self-start sm:self-auto">
+              {waData?.status === 'CONNECTED' ? (
+                <div className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center space-x-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Sender Active: +{waData.phoneNumber}</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsWhatsAppModalOpen(true)}
+                  className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Connect Hotel Sender Device</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setIsQrStationCollapsed(!isQrStationCollapsed)}
+                className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 text-xs transition-all cursor-pointer"
+                title={isQrStationCollapsed ? 'Expand 2 QR Channels' : 'Collapse 2 QR Channels'}
+              >
+                {isQrStationCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {!isQrStationCollapsed && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              {/* QR 1: Reception / Amenities */}
+              <div className="bg-slate-950/70 border border-amber-500/20 rounded-2xl p-4 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-base">🛎️</span>
+                      <h3 className="text-xs sm:text-sm font-bold text-amber-400 uppercase tracking-wider">
+                        QR 1: Receive Amenities (Reception)
+                      </h3>
+                    </div>
+                    {receptionPhoneInput ? (
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        Active: +{receptionPhoneInput}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                        Scan QR or Enter Below
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    Housekeeping, room cleaning, extra towels, toiletries, maintenance &amp; reception assistance requests route here.
+                  </p>
+                </div>
+
+                {/* QR Code Container */}
+                <div className="text-center py-2">
+                  <div className="p-3 bg-white rounded-2xl inline-block shadow-lg border border-slate-200">
+                    {receptionQrUrl ? (
+                      <img
+                        src={receptionQrUrl}
+                        alt="QR 1 - Receive Amenities"
+                        className="w-36 h-36 sm:w-40 sm:h-40 object-contain mx-auto"
+                      />
+                    ) : (
+                      <div className="w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center text-slate-400">
+                        <RefreshCw className="w-6 h-6 animate-spin text-amber-500" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-300 mt-2 font-medium">
+                    Scan with <strong>Reception phone</strong> &amp; tap Send on WhatsApp
+                  </p>
+                </div>
+
+                {/* Direct Phone Input + Save */}
+                <div className="space-y-2 pt-2 border-t border-slate-800">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="tel"
+                      value={receptionPhoneInput}
+                      onChange={(e) => setReceptionPhoneInput(e.target.value)}
+                      placeholder="e.g. 9876543210 (or with 91)"
+                      className="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-500"
+                    />
+                    <button
+                      onClick={() => handleSavePhoneSettings('reception')}
+                      disabled={savingPhoneSettings}
+                      className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center space-x-1 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Save</span>
+                    </button>
+                  </div>
+
+                  {/* Test Amenities Alert Button */}
+                  <button
+                    onClick={handleTestReceptionAlert}
+                    disabled={testingReception || !receptionPhoneInput}
+                    className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-amber-500/10 text-amber-300 hover:text-amber-200 border border-slate-800 hover:border-amber-500/30 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <Bell className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{testingReception ? 'Sending Test...' : 'Send Test Amenities Alert to Reception'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* QR 2: Kitchen / Food Orders */}
+              <div className="bg-slate-950/70 border border-emerald-500/20 rounded-2xl p-4 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-base">👨‍🍳</span>
+                      <h3 className="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-wider">
+                        QR 2: Receive Food Orders (Kitchen)
+                      </h3>
+                    </div>
+                    {kitchenPhoneInput ? (
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        Active: +{kitchenPhoneInput}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                        Scan QR or Enter Below
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    Food &amp; beverage order tickets with dish details, special notes, and bill subtotal + GST route here.
+                  </p>
+                </div>
+
+                {/* QR Code Container */}
+                <div className="text-center py-2">
+                  <div className="p-3 bg-white rounded-2xl inline-block shadow-lg border border-slate-200">
+                    {kitchenQrUrl ? (
+                      <img
+                        src={kitchenQrUrl}
+                        alt="QR 2 - Receive Orders"
+                        className="w-36 h-36 sm:w-40 sm:h-40 object-contain mx-auto"
+                      />
+                    ) : (
+                      <div className="w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center text-slate-400">
+                        <RefreshCw className="w-6 h-6 animate-spin text-emerald-500" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-300 mt-2 font-medium">
+                    Scan with <strong>Kitchen phone</strong> &amp; tap Send on WhatsApp
+                  </p>
+                </div>
+
+                {/* Direct Phone Input + Save */}
+                <div className="space-y-2 pt-2 border-t border-slate-800">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="tel"
+                      value={kitchenPhoneInput}
+                      onChange={(e) => setKitchenPhoneInput(e.target.value)}
+                      placeholder="e.g. 9876543210 (or with 91)"
+                      className="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-emerald-500"
+                    />
+                    <button
+                      onClick={() => handleSavePhoneSettings('kitchen')}
+                      disabled={savingPhoneSettings}
+                      className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center space-x-1 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Save</span>
+                    </button>
+                  </div>
+
+                  {/* Test Kitchen Alert Button */}
+                  <button
+                    onClick={handleTestKitchenAlert}
+                    disabled={testingKitchen || !kitchenPhoneInput}
+                    className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-emerald-500/10 text-emerald-300 hover:text-emerald-200 border border-slate-800 hover:border-emerald-500/30 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <ChefHat className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{testingKitchen ? 'Sending Test...' : 'Send Test Food Order to Kitchen'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
         {loading && orders.length === 0 ? (
           <div className="py-24 text-center">
             <RefreshCw className="w-8 h-8 text-amber-400 animate-spin mx-auto mb-3" />
@@ -905,34 +1202,34 @@ ${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800">
                   <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-0.5">
-                    Phone 2 (Sender)
+                    Sender (Single Phone)
                   </div>
-                  <div className="text-xs font-semibold text-white">Order Desk WhatsApp</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Paired via QR below</div>
+                  <div className="text-xs font-semibold text-white">Hotel System</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">{waData?.phoneNumber ? `+${waData.phoneNumber}` : 'Connect below'}</div>
                 </div>
                 <div className="flex flex-col items-center justify-center">
-                  <div className="text-[10px] font-bold text-slate-400">Guest Orders</div>
+                  <div className="text-[10px] font-bold text-slate-400">Routes Automatically</div>
                   <ArrowRight className="w-4 h-4 text-amber-400 animate-pulse my-0.5" />
-                  <div className="text-[9px] text-emerald-400 font-mono">Auto Dispatch</div>
+                  <div className="text-[9px] text-emerald-400 font-mono">2 Different Numbers</div>
                 </div>
                 <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800">
                   <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5">
-                    Phone 1 (Receiver)
+                    Recipients (2 Phones)
                   </div>
-                  <div className="text-xs font-semibold text-white">Master Admin</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Gets loud WhatsApp alerts</div>
+                  <div className="text-xs font-semibold text-white">Reception &amp; Kitchen</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Scanned via 2 QRs</div>
                 </div>
               </div>
             </div>
 
-            {/* WhatsApp Connection Box for Phone 2 (Order Desk) */}
+            {/* WhatsApp Connection Box for Sender Phone */}
             <div className="mt-4 space-y-4">
               <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
                     <Smartphone className="w-4 h-4 text-slate-400" />
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                      Step 1: Order Desk WhatsApp Pairing
+                      Step 1: Hotel Sender WhatsApp (Dispatches Alerts)
                     </span>
                   </div>
                   {waData?.status === 'CONNECTED' ? (
@@ -959,28 +1256,19 @@ ${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
                       <div>
                         <div className="font-bold">Active Sender Device: +{waData.phoneNumber}</div>
                         <div className="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
-                          This Order Desk phone is online and ready to automatically dispatch order notifications when guests place orders.
+                          This central WhatsApp account automatically dispatches all Amenities alerts to Reception, and Food Orders to Kitchen.
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={handleSendTestWa}
-                        disabled={waActionLoading}
-                        className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>{waActionLoading ? 'Sending...' : 'Send Test Alert to Master Admin'}</span>
-                      </button>
-
-                      <button
                         onClick={handleLogoutWa}
                         disabled={waActionLoading}
-                        className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-slate-700 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                        className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-slate-700 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
                         title="Disconnect this WhatsApp session"
                       >
-                        <span>Disconnect</span>
+                        <span>Disconnect Sender</span>
                       </button>
                     </div>
                   </div>
@@ -997,9 +1285,9 @@ ${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
                       />
                     </div>
                     <div className="text-xs text-slate-300 space-y-1">
-                      <p className="font-semibold text-white">How to scan with Order Desk phone:</p>
+                      <p className="font-semibold text-white">Scan with Hotel Sender Phone:</p>
                       <p className="text-[11px] text-slate-400">
-                        1. Open WhatsApp &gt; Settings or 3 Dots &gt; <strong>Linked Devices</strong>
+                        1. Open WhatsApp &gt; Settings / 3 Dots &gt; <strong>Linked Devices</strong>
                       </p>
                       <p className="text-[11px] text-slate-400">
                         2. Tap <strong>Link a Device</strong> and point camera at the QR code above
@@ -1012,7 +1300,7 @@ ${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
                         className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold inline-flex items-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50"
                       >
                         <RefreshCw className={`w-3.5 h-3.5 ${waActionLoading ? 'animate-spin' : ''}`} />
-                        <span>Refresh QR Code</span>
+                        <span>Refresh Sender QR Code</span>
                       </button>
                     </div>
                   </div>
@@ -1031,7 +1319,7 @@ ${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
                 {(!waData?.status || waData?.status === 'DISCONNECTED' || waData?.status === 'FAILED') && (
                   <div className="py-4 text-center space-y-3">
                     <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-                      Click below to generate a pairing QR code. You will scan it with the Order Desk WhatsApp phone.
+                      Click below to generate a pairing QR code. Scan it with the hotel's central WhatsApp phone.
                     </p>
                     <button
                       onClick={handleConnectWa}
@@ -1039,82 +1327,130 @@ ${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
                       className="py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs inline-flex items-center space-x-2 transition-all cursor-pointer shadow-lg shadow-amber-500/20 disabled:opacity-50"
                     >
                       <QrCode className="w-4 h-4" />
-                      <span>{waActionLoading ? 'Starting...' : 'Connect WhatsApp (Scan QR)'}</span>
+                      <span>{waActionLoading ? 'Starting...' : 'Pair Sender WhatsApp (Scan QR)'}</span>
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Step 2: Dedicated Routing Numbers (Reception & Kitchen) */}
+              {/* Step 2: 2 Receiving Destination QRs & Numbers */}
               <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Smartphone className="w-4 h-4 text-amber-400" />
+                    <QrCode className="w-4 h-4 text-amber-400" />
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                      Step 2: WhatsApp Routing Destinations
+                      Step 2: 2 Recipient QRs (Scan to Connect Reception &amp; Kitchen)
                     </span>
                   </div>
                 </div>
 
-                {/* Number 1: Reception (Amenities Updates) */}
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-amber-400 flex items-center space-x-1.5">
-                      <span>🛎️ Reception WhatsApp (Amenities Updates)</span>
-                    </span>
-                    {waData?.settings?.receptionPhone || waData?.settings?.masterAdminPhone ? (
-                      <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                        Active: +{waData.settings.receptionPhone || waData.settings.masterAdminPhone}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400">Not configured</span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
-                    All guest room requests (Room Cleaning, Extra Towels, Toiletries, Maintenance, Reception callbacks) are sent to this Reception phone.
-                  </p>
-                  <input
-                    type="tel"
-                    value={receptionPhoneInput}
-                    onChange={(e) => setReceptionPhoneInput(e.target.value)}
-                    placeholder="e.g. 9876543210 or 919876543210"
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* QR 1: Reception */}
+                  <div className="p-3 rounded-xl bg-slate-900/80 border border-amber-500/20 space-y-3 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-amber-400 flex items-center space-x-1">
+                          <span>🛎️ QR 1: Amenities (Reception)</span>
+                        </span>
+                        {receptionPhoneInput ? (
+                          <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            Active: +{receptionPhoneInput}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-amber-400">Scan QR</span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Scan with Reception phone to auto-register.
+                      </p>
+                    </div>
 
-                {/* Number 2: Kitchen (Food Menu & Orders Updates) */}
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-400 flex items-center space-x-1.5">
-                      <span>👨‍🍳 Kitchen WhatsApp Link (Food Menu & Tickets)</span>
-                    </span>
-                    {waData?.settings?.kitchenPhone ? (
-                      <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                        Active: +{waData.settings.kitchenPhone}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400">Not configured</span>
-                    )}
+                    <div className="p-2 bg-white rounded-xl inline-block mx-auto">
+                      {receptionQrUrl ? (
+                        <img src={receptionQrUrl} alt="QR 1" className="w-28 h-28 object-contain" />
+                      ) : (
+                        <div className="w-28 h-28 flex items-center justify-center">
+                          <RefreshCw className="w-4 h-4 animate-spin text-slate-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <input
+                        type="tel"
+                        value={receptionPhoneInput}
+                        onChange={(e) => setReceptionPhoneInput(e.target.value)}
+                        placeholder="e.g. 9876543210"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-500"
+                      />
+                      <button
+                        onClick={handleTestReceptionAlert}
+                        disabled={testingReception || !receptionPhoneInput}
+                        className="w-full py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-[11px] font-semibold flex items-center justify-center space-x-1"
+                      >
+                        <Bell className="w-3 h-3 text-amber-400" />
+                        <span>{testingReception ? 'Testing...' : 'Test Amenities Alert'}</span>
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
-                    Enables the 1-click "WhatsApp Kitchen" button on each order card to instantly forward food tickets directly to the chef's WhatsApp.
-                  </p>
-                  <input
-                    type="tel"
-                    value={kitchenPhoneInput}
-                    onChange={(e) => setKitchenPhoneInput(e.target.value)}
-                    placeholder="e.g. 9876543210 or 919876543210"
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-emerald-500"
-                  />
+
+                  {/* QR 2: Kitchen */}
+                  <div className="p-3 rounded-xl bg-slate-900/80 border border-emerald-500/20 space-y-3 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-emerald-400 flex items-center space-x-1">
+                          <span>👨‍🍳 QR 2: Orders (Kitchen)</span>
+                        </span>
+                        {kitchenPhoneInput ? (
+                          <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            Active: +{kitchenPhoneInput}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-amber-400">Scan QR</span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Scan with Kitchen phone to auto-register.
+                      </p>
+                    </div>
+
+                    <div className="p-2 bg-white rounded-xl inline-block mx-auto">
+                      {kitchenQrUrl ? (
+                        <img src={kitchenQrUrl} alt="QR 2" className="w-28 h-28 object-contain" />
+                      ) : (
+                        <div className="w-28 h-28 flex items-center justify-center">
+                          <RefreshCw className="w-4 h-4 animate-spin text-slate-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <input
+                        type="tel"
+                        value={kitchenPhoneInput}
+                        onChange={(e) => setKitchenPhoneInput(e.target.value)}
+                        placeholder="e.g. 9876543210"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-emerald-500"
+                      />
+                      <button
+                        onClick={handleTestKitchenAlert}
+                        disabled={testingKitchen || !kitchenPhoneInput}
+                        className="w-full py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 text-[11px] font-semibold flex items-center justify-center space-x-1"
+                      >
+                        <ChefHat className="w-3 h-3 text-emerald-400" />
+                        <span>{testingKitchen ? 'Testing...' : 'Test Kitchen Alert'}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <button
-                  onClick={handleSavePhoneSettings}
+                  onClick={() => handleSavePhoneSettings('both')}
                   disabled={savingPhoneSettings}
                   className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50 shadow-md shadow-amber-500/20"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>{savingPhoneSettings ? 'Saving Settings...' : 'Save Reception & Kitchen WhatsApp Routing'}</span>
+                  <span>{savingPhoneSettings ? 'Saving Settings...' : 'Save Reception & Kitchen Phone Numbers'}</span>
                 </button>
               </div>
             </div>

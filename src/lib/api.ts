@@ -137,6 +137,8 @@ export const api = {
     updateWhatsAppSettings: (body: any) =>
       request('/admin/whatsapp/settings', { method: 'POST', body: JSON.stringify(body) }),
     sendWhatsAppTest: () => request('/admin/whatsapp/test', { method: 'POST' }),
+    sendWhatsAppTestReception: () => request('/admin/whatsapp/test-reception', { method: 'POST' }),
+    sendWhatsAppTestKitchen: () => request('/admin/whatsapp/test-kitchen', { method: 'POST' }),
     restartWhatsApp: () => request('/admin/whatsapp/restart', { method: 'POST' }),
     logoutWhatsApp: () => request('/admin/whatsapp/logout', { method: 'POST' }),
   },
