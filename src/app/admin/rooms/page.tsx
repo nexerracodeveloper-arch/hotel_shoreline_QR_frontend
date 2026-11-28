@@ -533,15 +533,22 @@ export default function AdminRoomsPage() {
     }
   };
 
-  const filteredRooms = rooms.filter((r) => {
-    if (floorFilter !== 'all' && String(r.floor) !== floorFilter) return false;
-    if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return r.roomNumber.toLowerCase().includes(q) || r.type.toLowerCase().includes(q);
-    }
-    return true;
-  });
+  const filteredRooms = [...rooms]
+    .sort((a, b) => {
+      if (a.roomNumber === '201') return -1;
+      if (b.roomNumber === '201') return 1;
+      if (a.floor !== b.floor) return a.floor - b.floor;
+      return a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true });
+    })
+    .filter((r) => {
+      if (floorFilter !== 'all' && String(r.floor) !== floorFilter) return false;
+      if (statusFilter !== 'all' && r.status !== statusFilter) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        return r.roomNumber.toLowerCase().includes(q) || r.type.toLowerCase().includes(q);
+      }
+      return true;
+    });
 
   return (
     <div className="space-y-6">
@@ -570,6 +577,75 @@ export default function AdminRoomsPage() {
           >
             <Plus className="w-4 h-4" />
             <span>Add New Room</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Featured Master Standee Showcase Banner for Room 201 */}
+      <div className="p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-[#1a1c29] to-slate-900 border-2 border-[#dfba73]/40 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center space-x-4">
+          <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl overflow-hidden border border-[#dfba73]/60 shadow-lg bg-stone-900 shrink-0">
+            <img
+              src="/Shoreline-Vista-Room-201-QR-Card.png"
+              alt="Room 201 Master Standee"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black tracking-wider uppercase border border-amber-500/30">
+                Official Reference Standee
+              </span>
+              <span className="text-xs text-slate-400">Second Floor Premium</span>
+            </div>
+            <h2 className="text-lg sm:text-xl font-black text-white mt-1 tracking-tight">
+              Shoreline Vista Room 201 Standee Card
+            </h2>
+            <p className="text-xs text-slate-400 mt-1 max-w-md">
+              Print-ready 300 DPI master standee with live production QR code, in-room dining menu, and complimentary Wi-Fi credentials.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto shrink-0">
+          <a
+            href="/Shoreline-Vista-Room-201-QR-Card.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            download="Shoreline-Vista-Room-201-QR-Card.pdf"
+            className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-[#dfba73] hover:from-amber-400 hover:to-[#ebd9b8] text-slate-950 font-black text-xs flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
+          >
+            <FileText className="w-4 h-4 text-slate-950" />
+            <span>Download PDF (300 DPI)</span>
+          </a>
+
+          <a
+            href="/Shoreline-Vista-Room-201-QR-Card.png"
+            target="_blank"
+            rel="noopener noreferrer"
+            download="Shoreline-Vista-Room-201-QR-Card.png"
+            className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download PNG</span>
+          </a>
+
+          <button
+            onClick={() => {
+              const r201 = rooms.find((r) => r.roomNumber === '201') || {
+                id: 'room-201',
+                roomNumber: '201',
+                floor: 2,
+                type: 'DELUXE_SUITE',
+                qrToken: 'qr_room_201_h7n2d',
+                status: 'OCCUPIED',
+              };
+              handleOpenQrStudio(r201);
+            }}
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
+          >
+            <QrCode className="w-4 h-4 text-amber-400" />
+            <span>Open Studio</span>
           </button>
         </div>
       </div>
@@ -649,6 +725,11 @@ export default function AdminRoomsPage() {
                       <span className="text-xl font-black text-white tracking-tight">
                         Room {room.roomNumber}
                       </span>
+                      {room.roomNumber === '201' && (
+                        <span className="text-[10px] bg-gradient-to-r from-amber-400 to-[#dfba73] text-slate-950 font-black px-2 py-0.5 rounded-md shadow-xs">
+                          Reference Master
+                        </span>
+                      )}
                       <span className="text-xs text-amber-400/90 font-medium bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
                         {getFloorPremiumLabel(room.floor)}
                       </span>
