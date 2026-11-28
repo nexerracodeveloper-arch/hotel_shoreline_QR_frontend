@@ -24,6 +24,7 @@ import {
   Check,
   UtensilsCrossed,
   Utensils,
+  FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -467,6 +468,23 @@ export default function AdminRoomsPage() {
 
     foodImg.src = '/food-banner.jpg';
     qrImg.src = qrDataUrl;
+  };
+
+  // Download Print-Ready PDF Card (Shoreline-Vista-Room-201-QR-Card.pdf)
+  const handleDownloadPdfCard = () => {
+    if (!selectedRoom) return;
+    const fileName = `Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.pdf`;
+    const link = document.createElement('a');
+    if (selectedRoom.roomNumber === '201') {
+      link.href = '/Shoreline-Vista-Room-201-QR-Card.pdf';
+    } else {
+      link.href = `http://localhost:5001/api/guest/room/card-pdf/${selectedRoom.roomNumber}`;
+    }
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Downloading ${fileName}...`);
   };
 
   // Download Hotel Wi-Fi Tent Card (Matching User's Physical Tent Card)
@@ -1317,6 +1335,18 @@ export default function AdminRoomsPage() {
 
             {/* Studio Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              {/* Primary PDF Download */}
+              <button
+                onClick={handleDownloadPdfCard}
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-[#dfba73] hover:from-amber-400 hover:to-[#ebd9b8] text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/25 transition-all cursor-pointer sm:col-span-2"
+                title="Download print-ready official PDF standee card"
+              >
+                <FileText className="w-4 h-4 text-slate-950" />
+                <span>
+                  Download Official Standee PDF (Shoreline-Vista-Room-{selectedRoom.roomNumber}-QR-Card.pdf)
+                </span>
+              </button>
+
               <button
                 onClick={handleDownloadActiveTabCard}
                 className="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
