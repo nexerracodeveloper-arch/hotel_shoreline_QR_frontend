@@ -535,8 +535,6 @@ export default function AdminRoomsPage() {
 
   const filteredRooms = [...rooms]
     .sort((a, b) => {
-      if (a.roomNumber === '201') return -1;
-      if (b.roomNumber === '201') return 1;
       if (a.floor !== b.floor) return a.floor - b.floor;
       return a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true });
     })
@@ -656,11 +654,6 @@ export default function AdminRoomsPage() {
                       <span className="text-xl font-black text-white tracking-tight">
                         Room {room.roomNumber}
                       </span>
-                      {room.roomNumber === '201' && (
-                        <span className="text-[10px] bg-gradient-to-r from-amber-400 to-[#dfba73] text-slate-950 font-black px-2 py-0.5 rounded-md shadow-xs">
-                          Reference Master
-                        </span>
-                      )}
                       <span className="text-xs text-amber-400/90 font-medium bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
                         {getFloorPremiumLabel(room.floor)}
                       </span>
