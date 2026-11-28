@@ -158,18 +158,14 @@ export default function AdminRoomsPage() {
     }
   };
 
-  // Download raw QR PNG (Dining or Wi-Fi depending on active tab)
+  // Download QR PNG (Dining or Wi-Fi depending on active tab)
   const handleDownloadQrPng = () => {
     if (standeeTab === 'wifi') {
       handleDownloadWifiQrPng();
       return;
     }
-    if (!qrDataUrl || !selectedRoom) return;
-    const link = document.createElement('a');
-    link.download = `Room_${selectedRoom.roomNumber}_Dining_QR.png`;
-    link.href = qrDataUrl;
-    link.click();
-    toast.success(`Downloaded QR code for Room ${selectedRoom.roomNumber}`);
+    if (!selectedRoom) return;
+    handleDownloadStandeeCard();
   };
 
   // Download raw Wi-Fi QR PNG
@@ -186,288 +182,19 @@ export default function AdminRoomsPage() {
     toast.success('Downloaded Wi-Fi Connection QR code');
   };
 
-  // Download Full In-Room Dining Standee Card on Canvas (Matching User's Reference)
+  // Download Full In-Room Dining Standee Card (Shoreline-Vista-Room-XXX-QR-Card.png)
   const handleDownloadStandeeCard = () => {
-    if (!qrDataUrl || !selectedRoom) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 850;
-    canvas.height = 1250;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Soft Luxury Cream/White Background
-    ctx.fillStyle = '#faf8f5';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Elegant Outer Gold Border & Inset
-    ctx.strokeStyle = '#dfba73';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
-
-    ctx.strokeStyle = '#ebd9b8';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(28, 28, canvas.width - 56, canvas.height - 56);
-
-    // Load Food Banner & QR Image
-    const foodImg = new Image();
-    const qrImg = new Image();
-
-    let imagesLoaded = 0;
-    const onBothLoaded = () => {
-      imagesLoaded++;
-      if (imagesLoaded === 2) {
-        // 1. Top Food Banner with rounded corners
-        ctx.save();
-        ctx.beginPath();
-        ctx.roundRect(50, 45, 750, 260, [20]);
-        ctx.clip();
-        try {
-          ctx.drawImage(foodImg, 50, 45, 750, 260);
-        } catch {
-          // Fallback
-        }
-
-        // Left Dark Gradient Overlay for 'Restaurant' text
-        const grad = ctx.createLinearGradient(50, 45, 450, 45);
-        grad.addColorStop(0, 'rgba(15, 23, 42, 0.92)');
-        grad.addColorStop(0.65, 'rgba(15, 23, 42, 0.55)');
-        grad.addColorStop(1, 'rgba(15, 23, 42, 0)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(50, 45, 500, 260);
-
-        // Cloche / Dome line icon
-        ctx.strokeStyle = '#fef08a';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(130, 115, 22, Math.PI, 0, false);
-        ctx.lineTo(160, 115);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(130, 90, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#fef08a';
-        ctx.fill();
-
-        // Cursive 'Restaurant' script
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'italic bold 56px serif';
-        ctx.textAlign = 'left';
-        ctx.fillText('Restaurant', 85, 185);
-
-        // DINE • RELAX • ENJOY
-        ctx.fillStyle = '#f8fafc';
-        ctx.font = 'bold 13px sans-serif';
-        ctx.fillText('DINE  •  RELAX  •  ENJOY', 90, 225);
-        ctx.restore();
-
-        // Golden border around the banner
-        ctx.strokeStyle = '#dfba73';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.roundRect(50, 45, 750, 260, [20]);
-        ctx.stroke();
-
-        // 2. Room Number Box with Premium Room badge
-        ctx.fillStyle = '#0e1a2f';
-        ctx.beginPath();
-        ctx.roundRect(245, 330, 360, 95, [20]);
-        ctx.fill();
-        ctx.strokeStyle = '#dfba73';
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-
-        ctx.fillStyle = '#dfba73';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('PREMIUM ROOM', 425, 362);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 42px sans-serif';
-        ctx.fillText(`ROOM ${selectedRoom.roomNumber}`, 425, 407);
-
-        // 3. Floor Title Line: e.g. "Second Floor Premium" (without floor or suite words)
-        ctx.strokeStyle = '#dfba73';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(100, 455);
-        ctx.lineTo(260, 455);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(590, 455);
-        ctx.lineTo(750, 455);
-        ctx.stroke();
-
-        ctx.fillStyle = '#8c6527';
-        ctx.font = 'bold 18px serif';
-        ctx.fillText(getFloorPremiumLabel(selectedRoom.floor).toUpperCase(), 425, 462);
-
-        // 4. Two Feature Badges: Restaurant & Room Service
-        // Left: Restaurant circle & text
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(175, 520, 26, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 22px serif';
-        ctx.fillText('🍽️', 175, 528);
-
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 18px sans-serif';
-        ctx.fillText('Restaurant', 215, 515);
-        ctx.fillStyle = '#64748b';
-        ctx.font = '13px sans-serif';
-        ctx.fillText('Multi-cuisine Delights', 215, 535);
-
-        // Center vertical divider
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(425, 495);
-        ctx.lineTo(425, 545);
-        ctx.stroke();
-
-        // Right: Room Service circle & text
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.beginPath();
-        ctx.arc(480, 520, 26, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 20px serif';
-        ctx.fillText('🛏️', 480, 527);
-
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 18px sans-serif';
-        ctx.fillText('Room Service', 520, 515);
-        ctx.fillStyle = '#64748b';
-        ctx.font = '13px sans-serif';
-        ctx.fillText('Enjoy Comfort, In-Room', 520, 535);
-
-        // 5. Scan Prompt
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 20px sans-serif';
-        ctx.fillText('Scan with your phone camera', 425, 590);
-
-        ctx.fillStyle = '#475569';
-        ctx.font = '15px sans-serif';
-        ctx.fillText('to view the menu & order in-room food & drinks', 425, 615);
-
-        // 6. QR Code with Left & Right Radiating Gold Rays
-        ctx.drawImage(qrImg, 280, 645, 290, 290);
-
-        // Left Rays \ | /
-        ctx.strokeStyle = '#dfba73';
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-
-        ctx.beginPath();
-        ctx.moveTo(210, 785);
-        ctx.lineTo(245, 780);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(205, 805);
-        ctx.lineTo(248, 805);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(210, 825);
-        ctx.lineTo(245, 830);
-        ctx.stroke();
-
-        // Right Rays / | \
-        ctx.beginPath();
-        ctx.moveTo(640, 785);
-        ctx.lineTo(605, 780);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(645, 805);
-        ctx.lineTo(602, 805);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(640, 825);
-        ctx.lineTo(605, 830);
-        ctx.stroke();
-
-        // 7. Wi-Fi Box
-        ctx.fillStyle = '#fffdfa';
-        ctx.beginPath();
-        ctx.roundRect(125, 965, 600, 90, [16]);
-        ctx.fill();
-        ctx.strokeStyle = '#dfba73';
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 26px sans-serif';
-        ctx.fillText('📶', 175, 1022);
-
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 18px sans-serif';
-        ctx.fillText('Complimentary High-Speed Wi-Fi', 215, 1005);
-
-        ctx.fillStyle = '#475569';
-        ctx.font = '15px sans-serif';
-        ctx.fillText('Network: Shoreline Vista_Guest   •   Password: Pass@999', 215, 1032);
-
-        // 8. Footer Line
-        ctx.strokeStyle = '#dfba73';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(90, 1095);
-        ctx.lineTo(160, 1095);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(690, 1095);
-        ctx.lineTo(760, 1095);
-        ctx.stroke();
-
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#64748b';
-        ctx.font = '14px sans-serif';
-        ctx.fillText('Hotel Shoreline Vista  •  Freshly Prepared & Delivered to Your Room', 425, 1100);
-
-        // 9. Bottom Waves Accent
-        ctx.fillStyle = '#0e1a2f';
-        ctx.beginPath();
-        ctx.roundRect(40, 1140, 770, 70, [0, 0, 16, 16]);
-        ctx.fill();
-
-        ctx.strokeStyle = '#dfba73';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(40, 1140);
-        ctx.lineTo(810, 1140);
-        ctx.stroke();
-
-        ctx.fillStyle = '#dfba73';
-        ctx.font = 'bold 13px sans-serif';
-        ctx.fillText('WAVES MULTICUISINE RESTAURANT & BAR  •  SHORELINE VISTA', 425, 1180);
-
-        const link = document.createElement('a');
-        link.download = `Room_${selectedRoom.roomNumber}_Standee_Card.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        toast.success(`Generated Standee Card for Room ${selectedRoom.roomNumber}`);
-      }
-    };
-
-    foodImg.onload = onBothLoaded;
-    foodImg.onerror = onBothLoaded;
-    qrImg.onload = onBothLoaded;
-    qrImg.onerror = onBothLoaded;
-
-    foodImg.src = '/food-banner.jpg';
-    qrImg.src = qrDataUrl;
+    if (!selectedRoom) return;
+    const fileName = `Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.png`;
+    const pngUrl = `/Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.png`;
+    const link = document.createElement('a');
+    link.href = pngUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Downloading ${fileName}...`);
   };
 
   // Download Print-Ready PDF Card (Shoreline-Vista-Room-201-QR-Card.pdf)
@@ -978,6 +705,18 @@ export default function AdminRoomsPage() {
                     <span>PDF</span>
                   </a>
 
+                  <a
+                    href={`/Shoreline-Vista-Room-${room.roomNumber}-QR-Card.png`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold text-xs flex items-center justify-center space-x-1 transition-all shrink-0"
+                    title={`Download Shoreline-Vista-Room-${room.roomNumber}-QR-Card.png`}
+                    download={`Shoreline-Vista-Room-${room.roomNumber}-QR-Card.png`}
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>PNG</span>
+                  </a>
+
                   <Link
                     href={`/room/${room.qrToken}`}
                     target="_blank"
@@ -1245,41 +984,59 @@ export default function AdminRoomsPage() {
 
             {/* Studio Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              {/* Primary PDF Download */}
-              <button
-                onClick={handleDownloadPdfCard}
-                className="py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-[#dfba73] hover:from-amber-400 hover:to-[#ebd9b8] text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/25 transition-all cursor-pointer sm:col-span-2"
+              {/* Primary PDF Download - Direct Link with 100% Reliability */}
+              <a
+                href={`/Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.pdf`}
+                download={`Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-[#dfba73] hover:from-amber-400 hover:to-[#ebd9b8] text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/25 transition-all cursor-pointer sm:col-span-2 text-center"
                 title="Download print-ready official PDF standee card"
               >
                 <FileText className="w-4 h-4 text-slate-950" />
                 <span>
                   Download Official Standee PDF (Shoreline-Vista-Room-{selectedRoom.roomNumber}-QR-Card.pdf)
                 </span>
-              </button>
+              </a>
 
-              <button
-                onClick={handleDownloadActiveTabCard}
-                className="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+              {/* High-Resolution PNG Standee Image */}
+              <a
+                href={
+                  standeeTab === 'wifi'
+                    ? '#'
+                    : standeeTab === 'combined'
+                    ? '#'
+                    : `/Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.png`
+                }
+                download={
+                  standeeTab === 'wifi'
+                    ? 'Hotel_Shoreline_Vista_WiFi_Tent_Card.png'
+                    : standeeTab === 'combined'
+                    ? `Room_${selectedRoom.roomNumber}_2in1_Card.png`
+                    : `Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.png`
+                }
+                target={standeeTab === 'dining' ? '_blank' : undefined}
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  if (standeeTab === 'wifi') {
+                    e.preventDefault();
+                    handleDownloadWifiStandeeCard();
+                  } else if (standeeTab === 'combined') {
+                    e.preventDefault();
+                    handleDownloadCombinedCard();
+                  }
+                }}
+                className="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer text-center sm:col-span-2"
               >
                 <Download className="w-4 h-4" />
                 <span>
                   {standeeTab === 'wifi'
                     ? 'Download Wi-Fi Tent Card (PNG)'
                     : standeeTab === 'combined'
-                    ? 'Download 2-in-1 Card (PNG)'
-                    : 'Download Dining Card (PNG)'}
+                    ? 'Download 2-in-1 Dual Card (PNG)'
+                    : `Download Standee Card Image (Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.png)`}
                 </span>
-              </button>
-
-              <button
-                onClick={handleDownloadQrPng}
-                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center justify-center space-x-2 border border-slate-700 transition-all cursor-pointer"
-              >
-                <QrCode className="w-4 h-4 text-amber-400" />
-                <span>
-                  {standeeTab === 'wifi' ? 'Download Wi-Fi QR (PNG)' : 'Download Raw QR (PNG)'}
-                </span>
-              </button>
+              </a>
 
               <button
                 onClick={handlePrintStandee}
@@ -1291,7 +1048,7 @@ export default function AdminRoomsPage() {
                     ? 'Print Wi-Fi Tent Card'
                     : standeeTab === 'combined'
                     ? 'Print 2-in-1 Dual Standee'
-                    : 'Print Dining Standee Card'}
+                    : 'Print Official Standee Card'}
                 </span>
               </button>
             </div>
