@@ -294,11 +294,14 @@ export default function AdminOrdersPage() {
                           <span className="font-mono text-slate-300 font-semibold">{formatRupees(subtotal)}</span>
                         </div>
                         <div className="flex items-center justify-between text-amber-400/90">
-                          <span>GST:</span>
+                          <span>+ GST:</span>
                           <span className="font-mono font-semibold">+ {formatRupees(gst)}</span>
                         </div>
                         <div className="flex items-baseline justify-between pt-1 border-t border-slate-800/80">
-                          <span className="text-slate-300 font-bold uppercase tracking-wider text-[11px]">Total Billed to Room:</span>
+                          <div>
+                            <span className="text-slate-300 font-bold uppercase tracking-wider text-[11px]">Total Billed to Room:</span>
+                            <div className="text-[10px] text-slate-400 font-mono">{formatRupees(subtotal)} + GST</div>
+                          </div>
                           <span className="text-base font-extrabold text-amber-400 font-mono">
                             {formatRupees(grandTotal)}
                           </span>

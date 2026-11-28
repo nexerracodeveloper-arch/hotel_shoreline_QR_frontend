@@ -1059,11 +1059,14 @@ ${order.specialNotes ? `\n📝 *Special Request:* "${order.specialNotes}"` : ''}
                             <span className="font-mono text-slate-300 font-semibold">{formatRupees(subtotal)}</span>
                           </div>
                           <div className="flex items-center justify-between text-amber-400/90">
-                            <span>GST:</span>
+                            <span>+ GST:</span>
                             <span className="font-mono font-semibold">+ {formatRupees(gst)}</span>
                           </div>
                           <div className="flex items-baseline justify-between pt-1 border-t border-slate-800/80">
-                            <span className="font-bold text-white uppercase tracking-wider text-[11px]">Total Bill Amount:</span>
+                            <div>
+                              <div className="font-bold text-white uppercase tracking-wider text-[11px]">Total Bill Amount:</div>
+                              <div className="text-[10px] text-slate-400 font-mono">{formatRupees(subtotal)} + GST</div>
+                            </div>
                             <span className="text-base sm:text-lg font-black text-white font-mono">
                               {formatRupees(grandTotal)}
                             </span>

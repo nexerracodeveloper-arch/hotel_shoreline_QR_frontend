@@ -815,8 +815,9 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                                     </div>
 
                                     {/* Price Column right-aligned */}
-                                    <div className="font-price font-bold text-stone-900 text-base sm:text-lg shrink-0 tracking-tight">
-                                      {formatRupees(item.price)}
+                                    <div className="font-price font-bold text-stone-900 text-base sm:text-lg shrink-0 tracking-tight flex items-baseline gap-1">
+                                      <span>{formatRupees(item.price)}</span>
+                                      <span className="text-[10px] sm:text-xs text-[#8c6527] font-semibold tracking-normal">+ GST</span>
                                     </div>
                                   </div>
 
@@ -913,8 +914,9 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                                 </h3>
                               </div>
 
-                              <div className="font-price font-bold text-stone-900 text-base sm:text-lg shrink-0 tracking-tight">
-                                {formatRupees(item.price)}
+                              <div className="font-price font-bold text-stone-900 text-base sm:text-lg shrink-0 tracking-tight flex items-baseline gap-1">
+                                <span>{formatRupees(item.price)}</span>
+                                <span className="text-[10px] sm:text-xs text-[#8c6527] font-semibold tracking-normal">+ GST</span>
                               </div>
                             </div>
 
@@ -1139,11 +1141,16 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                               <span className="font-price font-bold text-stone-900">{formatRupees(itemsSubtotal)}</span>
                             </div>
                             <div className="flex items-center justify-between text-[#8c6527]">
-                              <span className="font-medium">GST:</span>
+                              <span className="font-medium">+ GST</span>
                               <span className="font-price font-bold text-[#8c6527]">+ {formatRupees(gst)}</span>
                             </div>
                             <div className="flex items-center justify-between pt-1 border-t border-[#ebd9b8]/40">
-                              <span className="font-bold text-stone-800">Total Billed to Room:</span>
+                              <div>
+                                <span className="font-bold text-stone-800">Total Billed to Room:</span>
+                                <div className="text-[10px] text-stone-500 font-medium font-price">
+                                  {formatRupees(itemsSubtotal)} + GST
+                                </div>
+                              </div>
                               <span className="font-price font-black text-[#8c6527] text-base">
                                 {formatRupees(grand)}
                               </span>
@@ -1208,8 +1215,8 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 <span className="text-sm sm:text-base font-price font-black text-[#dfba73]">
                   {formatRupees(cartGrandTotal)}
                 </span>
-                <span className="text-[9px] text-amber-200/80 block leading-none">
-                  (incl. GST)
+                <span className="text-[10px] text-amber-200/90 block leading-none font-medium">
+                  {formatRupees(cartSubtotal)} + GST
                 </span>
               </div>
               <ChevronRight className="w-5 h-5 text-[#dfba73]" />
@@ -1250,7 +1257,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                     <div className="font-serif-luxury font-bold text-stone-900 text-xs sm:text-sm truncate">
                       {item.name}
                     </div>
-                    <div className="text-[11px] text-stone-500 font-price font-medium">{formatRupees(item.price)} each</div>
+                    <div className="text-[11px] text-stone-500 font-price font-medium">{formatRupees(item.price)} + GST each</div>
                   </div>
 
                   <div className="flex items-center space-x-2 bg-white border border-[#dfc07b] rounded-xl px-2 py-1 shadow-xs">
@@ -1327,7 +1334,7 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
                 <span className="font-price font-bold text-stone-900">{formatRupees(cartSubtotal)}</span>
               </div>
               <div className="flex items-center justify-between text-xs sm:text-sm text-[#8c6527]">
-                <span className="font-medium">GST:</span>
+                <span className="font-medium">+ GST</span>
                 <span className="font-price font-bold text-[#8c6527]">+ {formatRupees(cartGst)}</span>
               </div>
               <div className="flex items-center justify-between text-[11px] sm:text-xs text-stone-600">
@@ -1337,8 +1344,8 @@ export default function GuestRoomPage({ params }: { params: Promise<{ token: str
               <div className="flex items-baseline justify-between text-sm sm:text-base font-extrabold text-stone-900 pt-2 border-t border-[#ebd9b8]">
                 <div>
                   <div className="text-stone-900">Total to Room Folio:</div>
-                  <div className="text-[10px] text-stone-500 font-normal">
-                    {formatRupees(cartSubtotal)} + GST ({formatRupees(cartGst)})
+                  <div className="text-[11px] text-[#8c6527] font-medium font-price">
+                    {formatRupees(cartSubtotal)} + GST
                   </div>
                 </div>
                 <span className="font-price font-black text-[#8c6527] text-lg sm:text-xl">
