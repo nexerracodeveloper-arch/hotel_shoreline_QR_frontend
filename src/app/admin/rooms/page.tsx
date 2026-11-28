@@ -474,17 +474,20 @@ export default function AdminRoomsPage() {
   const handleDownloadPdfCard = () => {
     if (!selectedRoom) return;
     const fileName = `Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.pdf`;
+    const pdfUrl = `/Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.pdf`;
+    
+    // Open in new tab/window for instant view/print on all devices (mobile & desktop)
+    window.open(pdfUrl, '_blank');
+
+    // Also trigger anchor download
     const link = document.createElement('a');
-    if (selectedRoom.roomNumber === '201') {
-      link.href = '/Shoreline-Vista-Room-201-QR-Card.pdf';
-    } else {
-      link.href = `http://localhost:5001/api/guest/room/card-pdf/${selectedRoom.roomNumber}`;
-    }
+    link.href = pdfUrl;
     link.download = fileName;
+    link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success(`Downloading ${fileName}...`);
+    toast.success(`Opening ${fileName}...`);
   };
 
   // Download Hotel Wi-Fi Tent Card (Matching User's Physical Tent Card)
@@ -750,7 +753,18 @@ export default function AdminRoomsPage() {
     } else if (standeeTab === 'combined') {
       handleDownloadCombinedCard();
     } else {
-      handleDownloadStandeeCard();
+      if (!selectedRoom) return;
+      const fileName = `Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.png`;
+      const pngUrl = `/Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.png`;
+      window.open(pngUrl, '_blank');
+      const link = document.createElement('a');
+      link.href = pngUrl;
+      link.download = fileName;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success(`Opening ${fileName}...`);
     }
   };
 
@@ -949,13 +963,25 @@ export default function AdminRoomsPage() {
                     className="flex-1 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
                   >
                     <QrCode className="w-3.5 h-3.5" />
-                    <span>View / Download QR</span>
+                    <span>View Standee</span>
                   </button>
+
+                  <a
+                    href={`/Shoreline-Vista-Room-${room.roomNumber}-QR-Card.pdf`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-[#dfba73] hover:from-amber-400 hover:to-[#ebd9b8] text-slate-950 font-black text-xs flex items-center justify-center space-x-1 shadow-md transition-all shrink-0"
+                    title={`Download Shoreline-Vista-Room-${room.roomNumber}-QR-Card.pdf`}
+                    download={`Shoreline-Vista-Room-${room.roomNumber}-QR-Card.pdf`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>PDF</span>
+                  </a>
 
                   <Link
                     href={`/room/${room.qrToken}`}
                     target="_blank"
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition-all"
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition-all shrink-0"
                     title="Test Open Guest Room View"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -1033,141 +1059,25 @@ export default function AdminRoomsPage() {
               </button>
             </div>
 
-            {/* TAB 1: IN-ROOM DINING CARD (MATCHING USER REFERENCE DESIGN) */}
+            {/* TAB 1: IN-ROOM DINING CARD (EXACT 1:1 REPLICA OF USER REFERENCE DESIGN) */}
             {standeeTab === 'dining' && (
               <div
                 ref={printRef}
-                className="printable-standee-area bg-gradient-to-b from-[#faf8f5] via-white to-[#f7f3eb] text-slate-900 p-4 sm:p-5 rounded-3xl border-2 border-[#dfba73]/50 text-center shadow-xl mx-auto w-full max-w-sm relative overflow-hidden animate-in fade-in duration-150"
+                className="printable-standee-area bg-white text-slate-900 p-2 sm:p-3 rounded-3xl border-2 border-[#dfba73]/60 text-center shadow-2xl mx-auto w-full max-w-sm overflow-hidden animate-in fade-in duration-150"
               >
-                {/* 1. Top Food & Delicacies Banner with Script Restaurant Overlay */}
-                <div className="relative rounded-2xl overflow-hidden border border-[#dfba73]/80 shadow-md">
+                <div className="relative rounded-2xl overflow-hidden shadow-sm border border-stone-200">
                   <img
-                    src="/food-banner.jpg"
-                    alt="Waves Restaurant & Bar"
-                    className="w-full h-32 sm:h-36 object-cover"
+                    src={`/Shoreline-Vista-Room-${selectedRoom.roomNumber}-QR-Card.png`}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/Shoreline-Vista-Room-201-QR-Card.png';
+                    }}
+                    alt={`Shoreline Vista Room ${selectedRoom.roomNumber} QR Standee Card`}
+                    className="w-full h-auto object-contain block mx-auto"
                   />
-                  {/* Left dark luxury gradient overlay for 'Restaurant' text */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-stone-950/90 via-stone-950/45 to-transparent flex flex-col justify-center px-4 text-left">
-                    <div className="flex items-center space-x-1.5 text-amber-300 mb-0.5">
-                      <Utensils className="w-3.5 h-3.5 text-amber-300" />
-                      <span className="text-[9px] font-serif uppercase tracking-widest text-amber-200">
-                        Waves
-                      </span>
-                    </div>
-                    <div className="font-serif italic font-bold text-3xl sm:text-4xl text-white tracking-tight drop-shadow-md">
-                      Restaurant
-                    </div>
-                    <div className="text-[9px] font-bold tracking-widest text-white/95 uppercase mt-1 drop-shadow">
-                      DINE  •  RELAX  •  ENJOY
-                    </div>
-                  </div>
                 </div>
-
-                {/* 2. Room Number Box with Premium Room Badge */}
-                <div className="mt-3.5 mb-2 py-2 px-6 bg-[#0e1a2f] border border-[#dfba73]/70 text-white rounded-2xl inline-block shadow-md">
-                  <div className="text-[10px] uppercase tracking-widest font-black text-[#dfba73]">
-                    PREMIUM ROOM
-                  </div>
-                  <div className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-0.5">
-                    ROOM {selectedRoom.roomNumber}
-                  </div>
-                </div>
-
-                {/* 3. Floor Title Line: e.g. "Second Floor Premium" (without floor or suite words) */}
-                <div className="flex items-center justify-center space-x-3 my-1.5 px-3">
-                  <div className="h-px bg-gradient-to-r from-transparent via-[#dfba73] to-[#dfba73] flex-1" />
-                  <span className="text-xs sm:text-sm font-bold text-[#8c6527] font-serif tracking-wider uppercase">
-                    {getFloorPremiumLabel(selectedRoom.floor)}
-                  </span>
-                  <div className="h-px bg-gradient-to-l from-transparent via-[#dfba73] to-[#dfba73] flex-1" />
-                </div>
-
-                {/* 4. Two Feature Badges: Restaurant & Room Service */}
-                <div className="grid grid-cols-2 gap-2 my-2 py-2 border-y border-[#ebd9b8]/60 text-left">
-                  <div className="flex items-center space-x-2 pl-2">
-                    <div className="w-8 h-8 rounded-full border border-stone-300 flex items-center justify-center shrink-0 bg-stone-50">
-                      <UtensilsCrossed className="w-4 h-4 text-stone-800" />
-                    </div>
-                    <div className="leading-tight">
-                      <div className="text-xs font-bold text-stone-900">Restaurant</div>
-                      <div className="text-[9px] text-stone-500">Multi-cuisine Delights</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2 pl-2 border-l border-stone-200">
-                    <div className="w-8 h-8 rounded-full border border-stone-300 flex items-center justify-center shrink-0 bg-stone-50">
-                      <BedDouble className="w-4 h-4 text-stone-800" />
-                    </div>
-                    <div className="leading-tight">
-                      <div className="text-xs font-bold text-stone-900">Room Service</div>
-                      <div className="text-[9px] text-stone-500">Enjoy Comfort, In-Room</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 5. Scan Prompt */}
-                <div className="my-1.5">
-                  <div className="text-xs sm:text-sm font-bold text-stone-900">
-                    Scan with your phone camera
-                  </div>
-                  <div className="text-[11px] text-stone-500">
-                    to view the menu & order in-room food & drinks
-                  </div>
-                </div>
-
-                {/* 6. QR Code with Left & Right Radiating Gold Rays */}
-                <div className="flex items-center justify-center space-x-2.5 my-2">
-                  {/* Left rays */}
-                  <div className="text-[#dfba73] font-bold select-none text-base tracking-widest leading-none transform -rotate-12">
-                    \ | /
-                  </div>
-
-                  <div className="p-2 bg-white rounded-2xl border border-stone-200 shadow-sm inline-block">
-                    {qrDataUrl ? (
-                      <img
-                        src={qrDataUrl}
-                        alt={`Room ${selectedRoom.roomNumber} QR`}
-                        className="w-36 sm:w-44 h-36 sm:h-44 mx-auto"
-                      />
-                    ) : (
-                      <div className="w-36 sm:w-44 h-36 sm:h-44 flex items-center justify-center text-xs text-stone-400">
-                        Generating QR...
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right rays */}
-                  <div className="text-[#dfba73] font-bold select-none text-base tracking-widest leading-none transform rotate-12">
-                    \ | /
-                  </div>
-                </div>
-
-                {/* 7. Wi-Fi Box */}
-                <div className="mt-2 p-2.5 bg-[#fffdfa] rounded-xl text-[11px] text-stone-700 border border-[#dfba73]/60 flex items-center space-x-2 text-left shadow-xs">
-                  <Wifi className="w-5 h-5 text-stone-900 shrink-0" />
-                  <div>
-                    <div className="font-bold text-stone-900 text-[11px]">
-                      Complimentary High-Speed Wi-Fi
-                    </div>
-                    <div className="text-[10px] text-stone-600">
-                      Network: <span className="font-bold">Shoreline Vista_Guest</span> • Password: <span className="font-bold font-mono">Pass@999</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 8. Footer Line */}
-                <div className="flex items-center justify-center space-x-2 my-2 text-[9px] text-stone-500 font-medium">
-                  <div className="h-px bg-[#dfba73]/50 w-6" />
-                  <span>Hotel Shoreline Vista • Freshly Prepared & Delivered to Your Room</span>
-                  <div className="h-px bg-[#dfba73]/50 w-6" />
-                </div>
-
-                {/* 9. Bottom Ocean Waves Decorative Curves */}
-                <div className="-mx-5 -mb-5 mt-2 h-7 bg-gradient-to-r from-[#0d1e38] via-[#1a3860] to-[#0d1e38] rounded-b-2xl relative overflow-hidden flex items-center justify-center">
-                  <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#dfba73] to-transparent" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#dfba73]/90 font-serif">
-                    Shoreline Vista • Waves
-                  </span>
+                <div className="mt-2.5 text-[11px] font-bold text-stone-700 flex items-center justify-center space-x-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Room {selectedRoom.roomNumber} Official Standee Design (High-Res 300 DPI)</span>
                 </div>
               </div>
             )}
